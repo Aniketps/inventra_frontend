@@ -1,0 +1,8 @@
+button{
+    transition: all 0.3s ease-in 0s !important;
+}
+
+button:hover{
+    border: 2px solid white !important;
+    transform: translate(-5px, 2px);
+}

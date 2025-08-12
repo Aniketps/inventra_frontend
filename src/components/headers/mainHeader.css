@@ -1,0 +1,23 @@
+.header{
+    background-color: #1c1c1c;
+    height: auto;
+    position: fixed;
+    z-index: 50;
+}
+.Logo{
+    font-family: 'Italiana';
+    color: white;
+}
+.link{
+    font-family: 'Roboto', sans-serif;
+    transition: color 0.3s ease, transform 0.3s ease;
+    color: white;
+}
+.links{
+    gap: 20px;
+}
+
+.link:hover {
+    color: #ff9800;
+    transform: translateY(-2px);
+}
