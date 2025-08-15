@@ -4,7 +4,7 @@ function SimpleInput({Text, BGColor, BSColor, BRR, H, BRColor, Color, Type, Valu
             {
                 Disabled 
                     ? <input style={{ flex : "1", backgroundColor: "transparent", border: "none", outline: "none", color: `${Color}` }} type={Type} placeholder={Text} value={Value} onChange={(e)=> CallBack && CallBack(e.target.value)} disabled/>
-                    : <input style={{ flex : "1", backgroundColor: "transparent", border: "none", outline: "none", color: `${Color}` }} type={Type} placeholder={Text} value={Value}/>
+                    : <input style={{ flex : "1", backgroundColor: "transparent", border: "none", outline: "none", color: `${Color}` }} type={Type} placeholder={Text} value={Value} onChange={(e)=> CallBack && CallBack(e.target.value)}/>
             }
         </div>
     </>

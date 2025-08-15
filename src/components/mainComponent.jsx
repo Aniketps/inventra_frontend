@@ -1,5 +1,5 @@
 import Button from "./buttons/Button.jsx";
-import DropDownWithSeach from "./dropwDowns/DropDownWithSearch.jsx"
+import DropDownWithSearch from "./dropwDowns/DropDownWithSearch.jsx"
 import SimpleDropDown from "./dropwDowns/SimpleDropDown.jsx"
 import MainFooter from "./footers/MainFooter.jsx"
 import MainForm from "./forms/MainForm.jsx"
@@ -19,7 +19,7 @@ import Forbidden from "./StatusContainers/Forbidden.jsx"
 import SectionBar from "./navContents/SectionBar.jsx";
 
 export {
-        Button, DropDownWithSeach, SimpleDropDown,
+        Button, DropDownWithSearch, SimpleDropDown,
         MainFooter, MainHeader, MainForm, LoadingIndicator,
         ProgressIndicator, TitledIndicator, InputBothSideIcons,
         InputRightIcon, InputLeftIcon, SimpleInput, Section,

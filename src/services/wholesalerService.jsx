@@ -1,25 +1,9 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllProducts() {
+export async function AllWholesalers() {
     try {
-        const data = await axios.get("http://localhost:3000/api/products?s=0", {
-            headers: {
-                Authorization : Cookies.get("token"),
-            }
-        })
-        return data;
-    } catch (err) {
-        return err;
-    }
-}
-
-export async function AddProduct(name, categoryID) {
-    try {
-        const data = await axios.post("http://localhost:3000/api/products/new", {
-            name,
-            categoryID
-        }, {
+        const data = await axios.get("http://localhost:3000/api/wholesalers?s=0", {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -31,9 +15,9 @@ export async function AddProduct(name, categoryID) {
     }
 }
 
-export async function GetProductById(id) {
+export async function AddWholesaler(wholesalerData) {
     try {
-        const data = await axios.get(`http://localhost:3000/api/products/${id}`, {
+        const data = await axios.post("http://localhost:3000/api/wholesalers/new", wholesalerData, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -45,12 +29,29 @@ export async function GetProductById(id) {
     }
 }
 
-export async function SearchProducts(name, category) {
+export async function GetWholesalerById(id) {
     try {
+        const data = await axios.get(`http://localhost:3000/api/wholesalers/${id}`, {
+            headers: {
+                Authorization : Cookies.get("token"),
+            }
+        });
+        return data;
+    } catch (err) {
+        console.log(err);
+        return err;
+    }
+}
+
+export async function SearchWholesalers(date, address, name, phone, email) {
+    try {
+        const dateParam = date || '-';
+        const addressParam = address || '-';
         const nameParam = name || '-';
-        const categoryParam = category || '-';
+        const phoneParam = phone || '-';
+        const emailParam = email || '-';
         
-        const data = await axios.get(`http://localhost:3000/api/products/${nameParam}/${categoryParam}`, {
+        const data = await axios.get(`http://localhost:3000/api/wholesalers/${dateParam}/${addressParam}/${nameParam}/${phoneParam}/${emailParam}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -62,12 +63,9 @@ export async function SearchProducts(name, category) {
     }
 }
 
-export async function UpdateProduct(id, name, categoryID) {
+export async function UpdateWholesaler(id, wholesalerData) {
     try {
-        const data = await axios.put(`http://localhost:3000/api/products/${id}`, {
-            name,
-            categoryID
-        }, {
+        const data = await axios.put(`http://localhost:3000/api/wholesalers/${id}`, wholesalerData, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -79,9 +77,9 @@ export async function UpdateProduct(id, name, categoryID) {
     }
 }
 
-export async function DeleteProduct(id) {
+export async function DeleteWholesaler(id) {
     try {
-        const data = await axios.delete(`http://localhost:3000/api/products/${id}`, {
+        const data = await axios.delete(`http://localhost:3000/api/wholesalers/${id}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }

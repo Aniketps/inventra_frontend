@@ -1,24 +1,24 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllProducts() {
+export async function AllCategories() {
     try {
-        const data = await axios.get("http://localhost:3000/api/products?s=0", {
+        const data = await axios.get("http://localhost:3000/api/categories?s=0", {
             headers: {
                 Authorization : Cookies.get("token"),
             }
-        })
+        });
         return data;
     } catch (err) {
+        console.log(err);
         return err;
     }
 }
 
-export async function AddProduct(name, categoryID) {
+export async function AddCategory(name) {
     try {
-        const data = await axios.post("http://localhost:3000/api/products/new", {
-            name,
-            categoryID
+        const data = await axios.post("http://localhost:3000/api/categories/new", {
+            name: name
         }, {
             headers: {
                 Authorization : Cookies.get("token"),
@@ -31,9 +31,9 @@ export async function AddProduct(name, categoryID) {
     }
 }
 
-export async function GetProductById(id) {
+export async function GetCategoryById(id) {
     try {
-        const data = await axios.get(`http://localhost:3000/api/products/${id}`, {
+        const data = await axios.get(`http://localhost:3000/api/categories/${id}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -45,12 +45,11 @@ export async function GetProductById(id) {
     }
 }
 
-export async function SearchProducts(name, category) {
+export async function SearchCategories(name, date) {
     try {
         const nameParam = name || '-';
-        const categoryParam = category || '-';
-        
-        const data = await axios.get(`http://localhost:3000/api/products/${nameParam}/${categoryParam}`, {
+        const dateParam = date || '-';
+        const data = await axios.get(`http://localhost:3000/api/categories/${nameParam}/${dateParam}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -62,11 +61,10 @@ export async function SearchProducts(name, category) {
     }
 }
 
-export async function UpdateProduct(id, name, categoryID) {
+export async function UpdateCategory(id, name) {
     try {
-        const data = await axios.put(`http://localhost:3000/api/products/${id}`, {
-            name,
-            categoryID
+        const data = await axios.put(`http://localhost:3000/api/categories/${id}`, {
+            name: name
         }, {
             headers: {
                 Authorization : Cookies.get("token"),
@@ -79,9 +77,9 @@ export async function UpdateProduct(id, name, categoryID) {
     }
 }
 
-export async function DeleteProduct(id) {
+export async function DeleteCategory(id) {
     try {
-        const data = await axios.delete(`http://localhost:3000/api/products/${id}`, {
+        const data = await axios.delete(`http://localhost:3000/api/categories/${id}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
