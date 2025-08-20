@@ -1,447 +1,329 @@
 import DashboardLayout from "../layouts/DashboardLayout.jsx";
-import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer, DropDownWithSearch } from "../components/mainComponent.jsx";
+import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer, MainForm, UAForm, SimpleDropDown } from "../components/mainComponent.jsx";
 import VerifyEntry from "../services/validateUserEntry.jsx"
 import { useEffect, useState } from "react";
-import { AllStocks, AddStock, DeleteStock, UpdateStock } from "../services/stockService.jsx";
-import { AllWholesalers } from "../services/wholesalerService.jsx";
 import { AllProducts } from "../services/productService.jsx";
+import { AllWholesalers } from "../services/wholesalerService.jsx";
+import { useNavigate } from "react-router-dom";
+import { UpdateStock, DeleteStock, AllStocks } from "../services/stockService.jsx";
 
 function Stocks() {
     const [authStatus, setAuthStatus] = useState(null);
     const [stocks, setStocks] = useState([]);
-    const [wholesalers, setWholesalers] = useState([]);
-    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [statusMessage, setStatusMessage] = useState("");
-    const [showStatus, setShowStatus] = useState(false);
-    
-    // Form states for adding new stock
-    const [newStock, setNewStock] = useState({
-        productID: "",
-        wholesalerID: "",
-        quantity: "",
-        totalCost: "",
-        sellingPrice: ""
-    });
-    
-    // Form states for editing stock
-    const [editingStock, setEditingStock] = useState(null);
-    const [editForm, setEditForm] = useState({
-        quantity: "",
-        totalCost: "",
-        sellingPrice: ""
-    });
+    const [page, setPage] = useState('1');
+    const [statusData, setStatusData] = useState({});
+    const [confirmation, setConfimation] = useState(false);
+    const [newForm, setNewForm] = useState(false);
+    const [updateForm, setUpdateForm] = useState(false);
+
+    const [updateStockProductData, setUpdateStockProductData] = useState({});
+
+    const [searchProduct, setSearchProduct] = useState("-");
+    const [searchWholesalerName, setSearchWholesalerName] = useState("-");
+
+    const [wholesalers, setWholesalers] = useState([]);
+    const [filterWholesalers, setFilterWholesalers] = useState([]);
+    const [products, setProducts] = useState([]);
+
+    const columns = ["Sr. No", "Product", "Wholesaler", "Stock", "Selling Price", "Total", "Update", "Delete"];
+
+    const natigate = useNavigate();
 
     useEffect(() => {
-    (async () => {
-        const result = await VerifyEntry();
-        setAuthStatus(result);
-        if (result) {
-            await Promise.all([fetchProducts(), fetchWholesalers()]);
-            await fetchStocks();
-        }
-    })();
-}, []);
+        let timed;
+        const Verify = async () => {
+            const result = await VerifyEntry();
+            setAuthStatus(result);
+            if (result) {
+                timed = setTimeout(() => {
+                    fetchStocks();
+                }, 1000);
+            }
+        };
+        Verify();
+        return ()=>{
+            if (timed) clearTimeout(timed);
+        };
+    }, [confirmation, searchProduct, searchWholesalerName]);
 
-    
-    const fetchStocks = async () => {
+    const update = async () => {
         setLoading(true);
         try {
-            const response = await AllStocks();
+            const response = await UpdateStock(updateStockProductData.stockID, updateStockProductData.productID, updateStockProductData.stock, updateStockProductData.sellingPrice, updateStockProductData.wholesalerID);
             if (response.status === 200) {
-                console.log("All Stocks:", response.data.data);
-
-                
-                setStocks(response.data.data[1]);
+                setStatusData({
+                    "Message": "Updated Successfully",
+                    "Desc": "Record Has been Updated Successfully...",
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
+            } else {
+                setStatusData({
+                    "Message": "Failed To Updated",
+                    "Desc": response.response.data.message,
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
             }
         } catch (error) {
-            console.error("Error fetching stocks:", error);
-            showStatusMessage("Error", "Failed to load stocks");
+            setStatusData({
+                "Message": "Failed To Updated",
+                "Desc": response.response.data.message,
+                "Buttons": [
+                    {
+                        Title: "Close",
+                        Color: "white",
+                        BGColor: "#0069d9",
+                        BRColor: "#0069d9",
+                        OnClick: () => setConfimation(false)
+                    }
+                ]
+            });
+            setConfimation(true);
         } finally {
             setLoading(false);
         }
-    };
-    
-    const fetchWholesalers = async () => {
-        try {
-            const response = await AllWholesalers();
-            if (response.status === 200) {
-                const data = response.data.data;
-                let allWholesalers = [];
-                if (Array.isArray(data)) {
-                    allWholesalers = data;
-                } else if (typeof data === "object" && data !== null) {
-                    for (const group in data) {
-                        allWholesalers = [...allWholesalers, ...data[group]];
-                    }
-                }
-                setWholesalers(allWholesalers);
-            }
-        } catch (error) {
-            console.error("Error fetching wholesalers:", error);
-        }
-    };
-    
-    const fetchProducts = async () => {
-        try {
-            const response = await AllProducts();
-            if (response.status === 200) {
-                const productData = response.data.data;
-                // Flatten possible grouped product structure
-                let allProducts = [];
-                if (Array.isArray(productData)) {
-                    allProducts = productData; // already an array
-                } else if (typeof productData === "object" && productData !== null) {
-                    for (const group in productData) {
-                        allProducts = [...allProducts, ...productData[group]];
-                    }
-                }
-                setProducts(allProducts);
-            }
-        } catch (error) {
-            console.error("Error fetching products:", error);
-        }
-    };
+    }
 
-    const handleAddStock = async () => {
-        // Validate form
-        if (!newStock.productID || !newStock.wholesalerID || !newStock.quantity || !newStock.totalCost || !newStock.sellingPrice) {
-            showStatusMessage("Error", "All fields are required");
-            return;
-        }
-
-        try {
-            const response = await AddStock({
-                productID: Number(newStock.productID),
-                wholesalerID: Number(newStock.wholesalerID),
-                stock: Number(newStock.quantity),
-                totalCost: Number(newStock.totalCost),
-                sellingPrice: Number(newStock.sellingPrice)
-            });
-            
-            if (response.status === 201) {
-                showStatusMessage("Success", "Stock added successfully");
-                setNewStock({
-                    productID: "",
-                    wholesalerID: "",
-                    quantity: "",
-                    totalCost: "",
-                    sellingPrice: ""
-                });
-                fetchStocks();
-            }
-        } catch (error) {
-            console.error("Error adding stock:", error);
-            showStatusMessage("Error", "Failed to add stock");
-        }
-    };
-
-    const handleDeleteStock = async (id) => {
-        try {
-            const response = await DeleteStock(id);
-            if (response.status === 200) {
-                showStatusMessage("Success", "Stock deleted successfully");
-                fetchStocks();
-            }
-        } catch (error) {
-            console.error("Error deleting stock:", error);
-            showStatusMessage("Error", "Failed to delete stock");
-        }
-    };
-
-    const startEditing = (stock) => {
-        setEditingStock(stock);
-        setEditForm({
-            quantity: stock.quantity,
-            totalCost: stock.totalCost,
-            sellingPrice: stock.sellingPrice
-        });
-    };
-
-    const handleUpdateStock = async () => {
-        if (!editForm.quantity || !editForm.totalCost || !editForm.sellingPrice) {
-            showStatusMessage("Error", "All fields are required");
-            return;
-        }
-
-        try {
-            const response = await UpdateStock(
-                editingStock.stockID,
+    const updateConfirmation = () => {
+        setUpdateForm(false);
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to Update the record?",
+            "Buttons": [
                 {
-                    productID: Number(editingStock.productID),
-                    wholesalerID: Number(editingStock.wholesalerID),
-                    stock: Number(editForm.quantity),
-                    totalCost: Number(editForm.totalCost),
-                    sellingPrice: Number(editForm.sellingPrice)
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Update",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: update
+                },
+            ]
+        });
+        setConfimation(true);
+    };
+
+    const updateStock = async (...data) => {
+        await setUpdateStockProductData(data[0]);
+        setUpdateForm(true);
+    }
+
+    const deleteStock = (id) => {
+        const del = async () => {
+            setLoading(true);
+            try {
+                const response = await DeleteStock(id);
+                if (response.status === 200) {
+                    setStatusData({
+                        "Message": "Deleted Successfully",
+                        "Desc": "Record Has been Deleted Successfully... ",
+                        "Buttons": [
+                            {
+                                Title: "Close",
+                                Color: "white",
+                                BGColor: "#0069d9",
+                                BRColor: "#0069d9",
+                                OnClick: () => setConfimation(false)
+                            }
+                        ]
+                    });
+                    setConfimation(true);
                 }
-            );
-            
-            if (response.status === 200) {
-                showStatusMessage("Success", "Stock updated successfully");
-                setEditingStock(null);
-                fetchStocks();
+            } catch (error) {
+                setStatusData({
+                    "Message": "Failed To Delete",
+                    "Desc": error,
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
+            } finally {
+                setLoading(false);
             }
+        };
+
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to delete the record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Delete",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: del
+                },
+            ]
+        });
+
+        setConfimation(true);
+    }
+
+    const fetchStocks = async () => {
+        setLoading(true);
+        try {
+
+            const response3 = await AllStocks(searchProduct, searchWholesalerName);
+            if (response3.status === 200) {
+                setStocks(response3.data.data);
+            }
+
+            const response1 = await AllProducts('-', '-', '-');
+            if (response1.status === 200) {
+                let productData = [];
+                const keys = Object.keys(response1.data.data);
+                for (let i = 0; i < keys.length; i++) {
+                    const page = keys[i];
+                    const pageData = response1.data.data[page].map(data => ({
+                        ...data,
+                        key: data.productName,
+                        value: data.productID
+                    }));
+                    productData = [...productData, ...pageData];
+                }
+                setProducts(productData);
+            }
+            const response2 = await AllWholesalers('-', '-', '-', '-', '-');
+            if (response2.status === 200) {
+                let wholesalerData = [];
+                const keys = Object.keys(response2.data.data);
+                for (let i = 0; i < keys.length; i++) {
+                    const page = keys[i];
+                    const pageData = response2.data.data[page].map(data => ({
+                        ...data,
+                        key: data.wholesalerName,
+                        value: data.wholesalerName
+                    }));
+                    wholesalerData = [...wholesalerData, ...pageData];
+                }
+                setFilterWholesalers(wholesalerData);
+            }
+            const response4 = await AllWholesalers('-', '-', '-', '-', '-');
+            if (response4.status === 200) {
+                let wholesalerData = [];
+                const keys = Object.keys(response4.data.data);
+                for (let i = 0; i < keys.length; i++) {
+                    const page = keys[i];
+                    const pageData = response4.data.data[page].map(data => ({
+                        ...data,
+                        key: data.wholesalerName,
+                        value: data.wholesalerID
+                    }));
+                    wholesalerData = [...wholesalerData, ...pageData];
+                }
+                setWholesalers(wholesalerData);
+            }
+
         } catch (error) {
-            console.error("Error updating stock:", error);
-            showStatusMessage("Error", "Failed to update stock");
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const cancelEditing = () => {
-        setEditingStock(null);
-    };
-
-    const showStatusMessage = (type, message) => {
-        setStatusMessage({ type, message });
-        setShowStatus(true);
-        setTimeout(() => setShowStatus(false), 3000);
-    };
-    
-    const getProductName = (productID) => {
-        console.log("Product ID:", productID);
-
-        
-        const product = products.find(p => String(p.productID) === String(productID));
-        return product ? product.productName : "Unknown Product";
-    };
-    
-    const getWholesalerName = (wholesalerID) => {
-        const wholesaler = wholesalers.find(w => String(w.wholesalerID) === String(wholesalerID));
-        return wholesaler ? wholesaler.wholesalerName : "Unknown Wholesaler";
     };
 
     if (authStatus === null) {
         return <TitledIndicator Process="Loading..." />
     }
 
+    const Paging = (pageNo) => {
+        if (pageNo === 1) {
+            if (parseInt(page) + 1 <= Object.keys(stocks).length) {
+                setPage(prev => `${parseInt(prev) + pageNo}`)
+            }
+        } else {
+            if (page !== '1') {
+                setPage(prev => `${parseInt(prev) + pageNo}`)
+            }
+        }
+    }
+
     return <>
         {
             authStatus
                 ? <DashboardLayout>
-                    <div className="container py-4">
-                        <h1 className="mb-4 text-white">Stock Management</h1>
-                        
-                        {/* Add New Stock */}
-                        <div className="card mb-4">
-                            <div className="card-header bg-dark text-white">
-                                <h5 className="mb-0">Add New Stock</h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <label className="form-label">Product</label>
-                                        <DropDownWithSearch 
-                                            Options={Array.isArray(products) ? products.map(product => ({
-                                                ID: product.productID,
-                                                Name: product.productName
-                                            })) : []} 
-                                            OnSelect={(selected) => setNewStock({...newStock, productID: selected.id})} 
-                                            Placeholder="Select Product" 
-                                            value={newStock.productID}
-                                        />
+                    {
+                        loading
+                            ? <TitledIndicator Process="Loading Data..." />
+                            : Object.keys(stocks).length == 0
+                                ? <>
+                                    <div
+                                        className="d-flex flex-column justify-content-center align-items-center"
+                                        style={{ height: "90vh", width: "100%", color: "white" }}
+                                    >
+                                        <h2>No Stocks Found</h2>
+                                        <Button Title="New Stock" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => natigate('/purchases')} />
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Wholesaler</label>
-                                        <DropDownWithSearch 
-                                            Options={Array.isArray(wholesalers) ? wholesalers.map(wholesaler => ({
-                                                ID: wholesaler.wholesalerID,
-                                                Name: wholesaler.wholesalerName
-                                            })) : []} 
-                                            OnSelect={(selected) => setNewStock({...newStock, wholesalerID: selected.id})} 
-                                            Placeholder="Select Wholesaler" 
-                                            value={newStock.wholesalerID}
-                                        />
-                                    </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label">Quantity</label>
-                                        <SimpleInput 
-                                            Text="Quantity" 
-                                            BGColor="#f8f9fa" 
-                                            BRColor="#ced4da" 
-                                            Color="#212529" 
-                                            Value={newStock.quantity} 
-                                            CallBack={(value) => setNewStock({...newStock, quantity: value})} 
-                                            Type="number"
-                                        />
-                                    </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label">Total Cost</label>
-                                        <SimpleInput 
-                                            Text="Total Cost" 
-                                            BGColor="#f8f9fa" 
-                                            BRColor="#ced4da" 
-                                            Color="#212529" 
-                                            Value={newStock.totalCost} 
-                                            CallBack={(value) => setNewStock({...newStock, totalCost: value})} 
-                                            Type="number"
-                                        />
-                                    </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label">Selling Price</label>
-                                        <SimpleInput 
-                                            Text="Selling Price" 
-                                            BGColor="#f8f9fa" 
-                                            BRColor="#ced4da" 
-                                            Color="#212529" 
-                                            Value={newStock.sellingPrice} 
-                                            CallBack={(value) => setNewStock({...newStock, sellingPrice: value})} 
-                                            Type="number"
-                                        />
-                                    </div>
-                                    <div className="col-12 mt-3">
-                                        <Button 
-                                            Title="Add Stock" 
-                                            BGColor="#0d6efd" 
-                                            Color="white" 
-                                            BRColor="#0d6efd" 
-                                            OnClick={handleAddStock} 
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Stocks List */}
-                        <div className="card">
-                            <div className="card-header bg-dark text-white">
-                                <h5 className="mb-0">Stocks List</h5>
-                            </div>
-                            <div className="card-body">
-                                {loading ? (
-                                    <TitledIndicator Process="Loading stocks..." />
-                                ) : stocks.length === 0 ? (
-                                    <p className="text-center">No stocks found</p>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table table-striped table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Product</th>
-                                                    <th>Wholesaler</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total Cost</th>
-                                                    <th>Selling Price</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {Array.isArray(stocks) && stocks.length > 0 ? stocks.map(stock => (
-                                                    <tr key={stock.stockID}>
-                                                        <td>{stock.stockID}</td>
-                                                        <td>{stock.productName} </td>
-                                                        {/* <td>{getWholesalerName(stock.wholesalerID)}</td> */}
-                                                        <td>{stock.wholesalerName}</td>
-                                                        <td>
-                                                            {editingStock && editingStock.stockID === stock.stockID ? (
-                                                                <SimpleInput 
-                                                                    Text="Edit Quantity" 
-                                                                    BGColor="#f8f9fa" 
-                                                                    BRColor="#ced4da" 
-                                                                    Color="#212529" 
-                                                                    Value={editForm.quantity} 
-                                                                    CallBack={(value) => setEditForm({...editForm, quantity: value})} 
-                                                                    Type="number"
-                                                                />
-                                                            ) : (
-                                                                stock.stock
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingStock && editingStock.stockID === stock.stockID ? (
-                                                                <SimpleInput 
-                                                                    Text="Edit Total Cost" 
-                                                                    BGColor="#f8f9fa" 
-                                                                    BRColor="#ced4da" 
-                                                                    Color="#212529" 
-                                                                    Value={editForm.totalCost} 
-                                                                    CallBack={(value) => setEditForm({...editForm, totalCost: value})} 
-                                                                    Type="number"
-                                                                />
-                                                            ) : (
-                                                                stock.totalCost
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingStock && editingStock.stockID === stock.stockID ? (
-                                                                <SimpleInput 
-                                                                    Text="Edit Selling Price" 
-                                                                    BGColor="#f8f9fa" 
-                                                                    BRColor="#ced4da" 
-                                                                    Color="#212529" 
-                                                                    Value={editForm.sellingPrice} 
-                                                                    CallBack={(value) => setEditForm({...editForm, sellingPrice: value})} 
-                                                                    Type="number"
-                                                                />
-                                                            ) : (
-                                                                stock.sellingPrice
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingStock && editingStock.stockID === stock.stockID ? (
-                                                                <div className="d-flex gap-2">
-                                                                    <Button 
-                                                                        Title="Save" 
-                                                                        BGColor="#198754" 
-                                                                        Color="white" 
-                                                                        BRColor="#198754" 
-                                                                        OnClick={handleUpdateStock} 
-                                                                    />
-                                                                    <Button 
-                                                                        Title="Cancel" 
-                                                                        BGColor="#6c757d" 
-                                                                        Color="white" 
-                                                                        BRColor="#6c757d" 
-                                                                        OnClick={cancelEditing} 
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="d-flex gap-2">
-                                                                    <Button 
-                                                                        Title="Edit" 
-                                                                        BGColor="#0d6efd" 
-                                                                        Color="white" 
-                                                                        BRColor="#0d6efd" 
-                                                                        OnClick={() => startEditing(stock)} 
-                                                                    />
-                                                                    <Button 
-                                                                        Title="Delete" 
-                                                                        BGColor="#dc3545" 
-                                                                        Color="white" 
-                                                                        BRColor="#dc3545" 
-                                                                        OnClick={() => handleDeleteStock(stock.stockID)} 
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                )) : null}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {/* Status Message */}
-                    {showStatus && statusMessage && (
-                        <SimpleStatusContainer 
-                            Message={statusMessage.type} 
-                            Desc={statusMessage.message} 
-                            Buttons={[
-                                {
-                                    BGColor: "#0d6efd",
-                                    BRColor: "#0d6efd",
-                                    Color: "white",
-                                    OnClick: () => setShowStatus(false),
-                                    Title: "Close"
-                                }
-                            ]}
-                        />
-                    )}
+                                </>
+                                : <MainForm Title="Stocks" SearchHint="Search Product Name" ButtonTitle="Add Stock" Filters={[
+                                    <SimpleDropDown Title="Select Wholesaler" Options={filterWholesalers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setSearchWholesalerName} />
+                                ]} Columns={['stockID', columns]} DataFields={["productName", "wholesalerName", "stock", "sellingPrice", "totalCost"]} Data={[stocks[page]]} Page={Paging} Update={updateStock} Delete={deleteStock} Add={() => natigate('/purchases')} Search={searchProduct} SetSearch={setSearchProduct} />
+                    }
                 </DashboardLayout>
                 : <Forbidden />
+        }
+        {
+            confirmation ? <SimpleStatusContainer Message={statusData.Message} Desc={statusData.Desc} Buttons={statusData.Buttons} /> : <></>
+        }
+
+        {
+            updateForm ? <UAForm Title={"Update Stock"} Inputs={[
+                <SimpleDropDown Title="Select Product" Options={products} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val) => setUpdateStockProductData((prev) => ({ ...prev, productID: val }))} />,
+                <SimpleInput Text="Qunatity" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateStockProductData.stock} CallBack={(val) => setUpdateStockProductData((prev => ({ ...prev, stock: val })))} Disabled={false} />,
+                <SimpleInput Text="Product Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateStockProductData.sellingPrice} CallBack={(val) => setUpdateStockProductData((prev => ({ ...prev, sellingPrice: val })))} Disabled={false} />,
+                <SimpleDropDown Title="Select Wholesaler" Options={wholesalers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val) => setUpdateStockProductData((prev) => ({ ...prev, wholesalerID: val }))} />
+            ]} Buttons={[
+                {
+                    Title: "Cancel",
+                    Color: "#11b112",
+                    BGColor: "transferant",
+                    BRColor: "#11b112",
+                    OnClick: () => setUpdateForm(false)
+                },
+                {
+                    Title: "Confirm",
+                    Color: "#ff0000",
+                    BGColor: "transferant",
+                    BRColor: "#ff0000",
+                    OnClick: () => updateConfirmation()
+                },
+            ]} /> : <></>
         }
     </>
 }

@@ -1,9 +1,11 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllStocks() {
+export async function AllStocks(w, p) {
+    const W = w === ""? '-' : w;
+    const P = p === ""? '-' : p;
     try {
-        const data = await axios.get("http://localhost:3000/api/stocks?s=0", {
+        const data = await axios.get(`http://localhost:3000/api/stocks/${W}/${P}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -113,9 +115,16 @@ export async function GetStockByWholesalerId(id) {
     }
 }
 
-export async function UpdateStock(id, stockData) {
+export async function UpdateStock(id, productID, stock, sellingPrice, wholesalerID) {
     try {
-        const data = await axios.put(`http://localhost:3000/api/stocks/${id}`, stockData, {
+        const data = await axios.put(`http://localhost:3000/api/stocks/${id}`,
+            {
+                "productID" : productID,
+                "stock" : stock,
+                "sellingPrice" : sellingPrice,
+                "wholesalerID" : wholesalerID
+            }, 
+            {
             headers: {
                 Authorization : Cookies.get("token"),
             }

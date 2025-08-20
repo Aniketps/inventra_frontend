@@ -1,9 +1,9 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllWholesalers() {
+export async function AllWholesalers(date, address, name, contact, email) {
     try {
-        const data = await axios.get("http://localhost:3000/api/wholesalers?s=0", {
+        const data = await axios.get(`http://localhost:3000/api/wholesalers/${date}/${address}/${name}/${contact}/${email}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -15,9 +15,16 @@ export async function AllWholesalers() {
     }
 }
 
-export async function AddWholesaler(wholesalerData) {
+export async function AddWholesaler(name, address, phone, email) {
     try {
-        const data = await axios.post("http://localhost:3000/api/wholesalers/new", wholesalerData, {
+        const data = await axios.post("http://localhost:3000/api/wholesalers/new",
+            {
+                "name" : name,
+                "address" : address,
+                "phone" : phone,
+                "email" : email
+            }, 
+            {
             headers: {
                 Authorization : Cookies.get("token"),
             }
@@ -63,16 +70,22 @@ export async function SearchWholesalers(date, address, name, phone, email) {
     }
 }
 
-export async function UpdateWholesaler(id, wholesalerData) {
+export async function UpdateWholesaler(id, name, address, phone, email) {
     try {
-        const data = await axios.put(`http://localhost:3000/api/wholesalers/${id}`, wholesalerData, {
+        const data = await axios.put(`http://localhost:3000/api/wholesalers/${id}`, 
+            {
+                "name" : name,
+                "address" : address,
+                "phone" : phone,
+                "email" : email
+            },
+            {
             headers: {
                 Authorization : Cookies.get("token"),
             }
         });
         return data;
     } catch (err) {
-        console.log(err);
         return err;
     }
 }

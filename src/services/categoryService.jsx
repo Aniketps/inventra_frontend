@@ -1,16 +1,15 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllCategories() {
+export async function AllCategories(name, date) {
     try {
-        const data = await axios.get("http://localhost:3000/api/categories?s=0", {
+        const data = await axios.get(`http://localhost:3000/api/categories/${name}/${date}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }
         });
         return data;
     } catch (err) {
-        console.log(err);
         return err;
     }
 }
@@ -26,7 +25,6 @@ export async function AddCategory(name) {
         });
         return data;
     } catch (err) {
-        console.log(err);
         return err;
     }
 }
@@ -56,7 +54,6 @@ export async function SearchCategories(name, date) {
         });
         return data;
     } catch (err) {
-        console.log(err);
         return err;
     }
 }
@@ -72,7 +69,6 @@ export async function UpdateCategory(id, name) {
         });
         return data;
     } catch (err) {
-        console.log(err);
         return err;
     }
 }
@@ -86,7 +82,6 @@ export async function DeleteCategory(id) {
         });
         return data;
     } catch (err) {
-        console.log(err);
         return err;
     }
 }

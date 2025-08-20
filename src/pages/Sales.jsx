@@ -1,417 +1,357 @@
 import DashboardLayout from "../layouts/DashboardLayout.jsx";
-import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer, DropDownWithSearch } from "../components/mainComponent.jsx";
+import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer, MainForm, UAForm, SimpleDropDown } from "../components/mainComponent.jsx";
 import VerifyEntry from "../services/validateUserEntry.jsx"
 import { useEffect, useState } from "react";
-import { AllSales, AddSale, DeleteSale, UpdateSale } from "../services/salesService.jsx";
 import { AllCustomers } from "../services/customerService.jsx";
+import { AllCategories, SearchCategories } from "../services/categoryService.jsx";
 import { AllProducts } from "../services/productService.jsx";
+import { UpdateSale, DeleteSale, AllSales } from "../services/salesService.jsx";
+import { AllStocks } from "../services/stockService.jsx";
+import { useNavigate } from "react-router-dom";
 
 function Sales() {
     const [authStatus, setAuthStatus] = useState(null);
-    const [sales, setSales] = useState([]);
-    const [customers, setCustomers] = useState([]);
-    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [statusMessage, setStatusMessage] = useState("");
-    const [showStatus, setShowStatus] = useState(false);
+    const [page, setPage] = useState('1');
+    const [statusData, setStatusData] = useState({});
+    const [confirmation, setConfimation] = useState(false);
+    const [newForm, setNewForm] = useState(false);
+    const [updateForm, setUpdateForm] = useState(false);
     
-    // Form states for adding new sale
-    const [newSale, setNewSale] = useState({
-        customerID: "",
-        productID: "",
-        quantity: "",
-        totalPrice: "",
-        purchaseDate: new Date().toISOString().split('T')[0]
-    });
+    const [updateSaleData, setUpdateSaleData] = useState({});
     
-    // Form states for editing sale
-    const [editingSale, setEditingSale] = useState(null);
-    const [editForm, setEditForm] = useState({
-        quantity: "",
-        totalPrice: "",
-        purchaseDate: ""
-    });
+    const [searchCustomer, setSearchCustomer] = useState("-");
+    const [searchCategory, setSearchCategory] = useState("-");
+    const [searchProduct, setSearchProduct] = useState("-");
+    const [searchDate, setSearchDate] = useState("-");
+    
+    const [customers, setCustomers] = useState([]);
+    const [stocks, setStocks] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [categories, setCategroies] = useState([]);
+    const [sales, setSales] = useState([]);
+
+    const columns = ["Sr. No", "Customer", "Contact", "Product", "Category", "Wholesaler", "Quantity", "Discount", "Tax", "Total Bill", "Update", "Delete"];
+
+    const natigate = useNavigate();
 
     useEffect(() => {
+        let timed;
         (
             async () => {
                 const result = await VerifyEntry();
                 setAuthStatus(result);
                 if (result) {
-                    fetchSales();
-                    fetchCustomers();
-                    fetchProducts();
+                    const timed = setTimeout(() => {
+                        fetchSales();
+                    }, 1000);
                 }
             }
         )();
-    }, []);
-    
-    const fetchSales = async () => {
+        if (timed) return () => clearTimeout(timed);
+    }, [confirmation, searchCustomer, searchCategory, searchProduct, searchDate]);
+
+    const update = async () => {
         setLoading(true);
         try {
-            const response = await AllSales();
+            const response = await UpdateSale(updateSaleData.saleID, updateSaleData.stockID, updateSaleData.quantity, updateSaleData.discount, updateSaleData.tax, updateSaleData.totalBill, updateSaleData.customerID);
             if (response.status === 200) {
-                setSales(response.data.data);
+                setStatusData({
+                    "Message": "Updated Successfully",
+                    "Desc": "Record Has been Updated Successfully...",
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
+            } else {
+                setStatusData({
+                    "Message": "Failed To Updated",
+                    "Desc": response.response.data.message,
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
             }
         } catch (error) {
-            console.error("Error fetching sales:", error);
-            showStatusMessage("Error", "Failed to load sales");
+            setStatusData({
+                "Message": "Failed To Updated",
+                "Desc": response.response.data.message,
+                "Buttons": [
+                    {
+                        Title: "Close",
+                        Color: "white",
+                        BGColor: "#0069d9",
+                        BRColor: "#0069d9",
+                        OnClick: () => setConfimation(false)
+                    }
+                ]
+            });
+            setConfimation(true);
         } finally {
             setLoading(false);
         }
-    };
-    
-    const fetchCustomers = async () => {
-        try {
-            const response = await AllCustomers();
-            if (response.status === 200) {
-                setCustomers(response.data.data);
-            }
-        } catch (error) {
-            console.error("Error fetching customers:", error);
-        }
-    };
-    
-    const fetchProducts = async () => {
-        try {
-            const response = await AllProducts();
-            if (response.status === 200) {
-                setProducts(response.data.data);
-            }
-        } catch (error) {
-            console.error("Error fetching products:", error);
-        }
-    };
+    }
 
-    const handleAddSale = async () => {
-        // Validate form
-        if (!newSale.customerID || !newSale.productID || !newSale.quantity || !newSale.totalPrice || !newSale.purchaseDate) {
-            showStatusMessage("Error", "All fields are required");
-            return;
-        }
-
-        try {
-            const response = await AddSale(
-                newSale.customerID,
-                newSale.productID,
-                newSale.quantity,
-                newSale.totalPrice,
-                newSale.purchaseDate
-            );
-            
-            if (response.status === 201) {
-                showStatusMessage("Success", "Sale added successfully");
-                setNewSale({
-                    customerID: "",
-                    productID: "",
-                    quantity: "",
-                    totalPrice: "",
-                    purchaseDate: new Date().toISOString().split('T')[0]
-                });
-                fetchSales();
-            }
-        } catch (error) {
-            console.error("Error adding sale:", error);
-            showStatusMessage("Error", "Failed to add sale");
-        }
-    };
-
-    const handleDeleteSale = async (id) => {
-        try {
-            const response = await DeleteSale(id);
-            if (response.status === 200) {
-                showStatusMessage("Success", "Sale deleted successfully");
-                fetchSales();
-            }
-        } catch (error) {
-            console.error("Error deleting sale:", error);
-            showStatusMessage("Error", "Failed to delete sale");
-        }
-    };
-
-    const startEditing = (sale) => {
-        setEditingSale(sale);
-        setEditForm({
-            quantity: sale.quantity,
-            totalPrice: sale.totalPrice,
-            purchaseDate: new Date(sale.purchaseDate).toISOString().split('T')[0]
+    const updateConfirmation = () => {
+        setUpdateForm(false);
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to Update the record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Update",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: update
+                },
+            ]
         });
+        setConfimation(true);
     };
 
-    const handleUpdateSale = async () => {
-        if (!editForm.quantity || !editForm.totalPrice || !editForm.purchaseDate) {
-            showStatusMessage("Error", "All fields are required");
-            return;
-        }
+    const updateSale = async (...data) => {
+        await setUpdateSaleData(data[0]);
+        setUpdateForm(true);
+    }
 
+    const deleteSale = (id) => {
+        const del = async () => {
+            setLoading(true);
+            try {
+                const response = await DeleteSale(id);
+                if (response.status === 200) {
+                    setStatusData({
+                        "Message": "Deleted Successfully",
+                        "Desc": "Record Has been Deleted Successfully... ",
+                        "Buttons": [
+                            {
+                                Title: "Close",
+                                Color: "white",
+                                BGColor: "#0069d9",
+                                BRColor: "#0069d9",
+                                OnClick: () => setConfimation(false)
+                            }
+                        ]
+                    });
+                    setConfimation(true);
+                }
+            } catch (error) {
+                setStatusData({
+                    "Message": "Failed To Delete",
+                    "Desc": error,
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to delete the record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Delete",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: del
+                },
+            ]
+        });
+
+        setConfimation(true);
+    }
+
+    const fetchSales = async () => {
+        setLoading(true);
         try {
-            const response = await UpdateSale(
-                editingSale.saleID,
-                editForm.quantity,
-                editForm.totalPrice,
-                editForm.purchaseDate
-            );
-            
-            if (response.status === 200) {
-                showStatusMessage("Success", "Sale updated successfully");
-                setEditingSale(null);
-                fetchSales();
+            const response3 = await AllSales(searchCustomer, searchDate, searchCategory, '-', searchCustomer);
+            if (response3.status === 200) {
+                setSales(response3.data.data);
+            }
+            const response1 = await AllProducts('-', '-', '-');
+            if (response1.status === 200) {
+                let productData = [];
+                const keys = Object.keys(response1.data.data);
+                for (let i = 0; i < keys.length; i++) {
+                    const page = keys[i];
+                    const pageData = response1.data.data[page].map(data => ({
+                        ...data,
+                        key: data.productName,
+                        value: data.productID
+                    }));
+                    productData = [...productData, ...pageData];
+                }
+                setProducts(productData);
+            }else{
+                console.log("Failed to get Products");
+            }
+            const response2 = await AllCategories('-', '-');
+            if (response2.status === 200) {
+                let categoriesData = [];
+                const keys = Object.keys(response2.data.data);
+                for (let i = 0; i < keys.length; i++) {
+                    const page = keys[i];
+                    const pageData = response2.data.data[page].map(data => ({
+                        ...data,
+                        key: data.categoryName,
+                        value: data.categoryName
+                    }));
+                    categoriesData = [...categoriesData, ...pageData];
+                }
+                setCategroies(categoriesData);
+            }else{
+                console.log("Failed to get Categories");
+            }
+            const response4 = await AllCustomers('-', '-','-', '-','-');
+            if (response4.status === 200) {
+                let customersData = [];
+                const keys = Object.keys(response4.data.data);
+                for (let i = 0; i < keys.length; i++) {
+                    const page = keys[i];
+                    const pageData = response4.data.data[page].map(data => ({
+                        ...data,
+                        key: data.customerName,
+                        value: data.customerID
+                    }));
+                    customersData = [...customersData, ...pageData];
+                }
+                setCustomers(customersData);
+            }else{
+                console.log("Failed to get Customers");
+            }
+            const response5 = await AllStocks('-', '-');
+            if (response5.status === 200) {
+                let stockData = [];
+                const keys = Object.keys(response5.data.data);
+                for (let i = 0; i < keys.length; i++) {
+                    const page = keys[i];
+                    const pageData = response5.data.data[page].map(data => ({
+                        ...data,
+                        key: data.productName,
+                        value: data.stockID
+                    }));
+                    stockData = [...stockData, ...pageData];
+                }
+                setStocks(stockData);
+            }else{
+                console.log("Failed to get Stocks");
             }
         } catch (error) {
-            console.error("Error updating sale:", error);
-            showStatusMessage("Error", "Failed to update sale");
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const cancelEditing = () => {
-        setEditingSale(null);
-    };
-
-    const showStatusMessage = (type, message) => {
-        setStatusMessage({ type, message });
-        setShowStatus(true);
-        setTimeout(() => setShowStatus(false), 3000);
-    };
-    
-    const getCustomerName = (customerID) => {
-        const customer = customers.find(c => c.customerID === customerID);
-        return customer ? customer.customerName : "Unknown Customer";
-    };
-    
-    const getProductName = (productID) => {
-        const product = products.find(p => p.productID === productID);
-        return product ? product.productName : "Unknown Product";
     };
 
     if (authStatus === null) {
         return <TitledIndicator Process="Loading..." />
     }
 
+    const Paging = (pageNo) => {
+        if (pageNo === 1) {
+            if (parseInt(page) + 1 <= Object.keys(sales).length) {
+                setPage(prev => `${parseInt(prev) + pageNo}`)
+            }
+        } else {
+            if (page !== '1') {
+                setPage(prev => `${parseInt(prev) + pageNo}`)
+            }
+        }
+    }
+
     return <>
         {
             authStatus
                 ? <DashboardLayout>
-                    <div className="container py-4">
-                        <h1 className="mb-4">Sales Management</h1>
-                        
-                        {/* Add New Sale */}
-                        <div className="card mb-4">
-                            <div className="card-header bg-dark text-white">
-                                <h5 className="mb-0">Add New Sale</h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <label className="form-label">Customer</label>
-                                        <DropDownWithSearch 
-                                            Options={Array.isArray(customers) ? customers.map(customer => ({
-                                                ID: customer.customerID,
-                                                Name: customer.customerName
-                                            })) : []} 
-                                            OnSelect={(selected) => setNewSale({...newSale, customerID: selected.ID})} 
-                                            Placeholder="Select Customer" 
-                                        />
+                    {
+                        loading
+                            ? <TitledIndicator Process="Loading Data..." />
+                            : Object.keys(sales).length == 0
+                                ? <>
+                                    <div
+                                        className="d-flex flex-column justify-content-center align-items-center"
+                                        style={{ height: "90vh", width: "100%", color: "white" }}
+                                    >
+                                        <h2>No Sales Found</h2>
+                                        <Button Title="New Sale" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => natigate('/invoice')} />
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Product</label>
-                                        <DropDownWithSearch 
-                                            Options={Array.isArray(products) ? products.map(product => ({
-                                                ID: product.productID,
-                                                Name: product.productName
-                                            })) : []} 
-                                            OnSelect={(selected) => setNewSale({...newSale, productID: selected.ID})} 
-                                            Placeholder="Select Product" 
-                                        />
-                                    </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label">Quantity</label>
-                                        <SimpleInput 
-                                            Text="Quantity" 
-                                            BGColor="#f8f9fa" 
-                                            BRColor="#ced4da" 
-                                            Color="#212529" 
-                                            Value={newSale.quantity} 
-                                            CallBack={(value) => setNewSale({...newSale, quantity: value})} 
-                                            Type="number"
-                                        />
-                                    </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label">Total Price</label>
-                                        <SimpleInput 
-                                            Text="Total Price" 
-                                            BGColor="#f8f9fa" 
-                                            BRColor="#ced4da" 
-                                            Color="#212529" 
-                                            Value={newSale.totalPrice} 
-                                            CallBack={(value) => setNewSale({...newSale, totalPrice: value})} 
-                                            Type="number"
-                                        />
-                                    </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label">Purchase Date</label>
-                                        <SimpleInput 
-                                            Text="Purchase Date" 
-                                            BGColor="#f8f9fa" 
-                                            BRColor="#ced4da" 
-                                            Color="#212529" 
-                                            Value={newSale.purchaseDate} 
-                                            CallBack={(value) => setNewSale({...newSale, purchaseDate: value})} 
-                                            Type="date"
-                                        />
-                                    </div>
-                                    <div className="col-12 mt-3">
-                                        <Button 
-                                            Title="Add Sale" 
-                                            BGColor="#0d6efd" 
-                                            Color="white" 
-                                            BRColor="#0d6efd" 
-                                            OnClick={handleAddSale} 
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Sales List */}
-                        <div className="card">
-                            <div className="card-header bg-dark text-white">
-                                <h5 className="mb-0">Sales List</h5>
-                            </div>
-                            <div className="card-body">
-                                {loading ? (
-                                    <TitledIndicator Process="Loading sales..." />
-                                ) : sales.length === 0 ? (
-                                    <p className="text-center">No sales found</p>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table table-striped table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Customer</th>
-                                                    <th>Product</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total Price</th>
-                                                    <th>Purchase Date</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {Array.isArray(sales) ? sales.map(sale => (
-                                                    <tr key={sale.saleID}>
-                                                        <td>{sale.saleID}</td>
-                                                        <td>{getCustomerName(sale.customerID)}</td>
-                                                        <td>{getProductName(sale.productID)}</td>
-                                                        <td>
-                                                            {editingSale && editingSale.saleID === sale.saleID ? (
-                                                                <SimpleInput 
-                                                                    Text="Edit Quantity" 
-                                                                    BGColor="#f8f9fa" 
-                                                                    BRColor="#ced4da" 
-                                                                    Color="#212529" 
-                                                                    Value={editForm.quantity} 
-                                                                    CallBack={(value) => setEditForm({...editForm, quantity: value})} 
-                                                                    Type="number"
-                                                                />
-                                                            ) : (
-                                                                sale.quantity
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingSale && editingSale.saleID === sale.saleID ? (
-                                                                <SimpleInput 
-                                                                    Text="Edit Total Price" 
-                                                                    BGColor="#f8f9fa" 
-                                                                    BRColor="#ced4da" 
-                                                                    Color="#212529" 
-                                                                    Value={editForm.totalPrice} 
-                                                                    CallBack={(value) => setEditForm({...editForm, totalPrice: value})} 
-                                                                    Type="number"
-                                                                />
-                                                            ) : (
-                                                                sale.totalPrice
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingSale && editingSale.saleID === sale.saleID ? (
-                                                                <SimpleInput 
-                                                                    Text="Edit Purchase Date" 
-                                                                    BGColor="#f8f9fa" 
-                                                                    BRColor="#ced4da" 
-                                                                    Color="#212529" 
-                                                                    Value={editForm.purchaseDate} 
-                                                                    CallBack={(value) => setEditForm({...editForm, purchaseDate: value})} 
-                                                                    Type="date"
-                                                                />
-                                                            ) : (
-                                                                new Date(sale.purchaseDate).toLocaleDateString()
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingSale && editingSale.saleID === sale.saleID ? (
-                                                                <div className="d-flex gap-2">
-                                                                    <Button 
-                                                                        Title="Save" 
-                                                                        BGColor="#198754" 
-                                                                        Color="white" 
-                                                                        BRColor="#198754" 
-                                                                        OnClick={handleUpdateSale} 
-                                                                    />
-                                                                    <Button 
-                                                                        Title="Cancel" 
-                                                                        BGColor="#6c757d" 
-                                                                        Color="white" 
-                                                                        BRColor="#6c757d" 
-                                                                        OnClick={cancelEditing} 
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="d-flex gap-2">
-                                                                    <Button 
-                                                                        Title="Edit" 
-                                                                        BGColor="#0d6efd" 
-                                                                        Color="white" 
-                                                                        BRColor="#0d6efd" 
-                                                                        OnClick={() => startEditing(sale)} 
-                                                                    />
-                                                                    <Button 
-                                                                        Title="Delete" 
-                                                                        BGColor="#dc3545" 
-                                                                        Color="white" 
-                                                                        BRColor="#dc3545" 
-                                                                        OnClick={() => handleDeleteSale(sale.saleID)} 
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                )) : []}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {/* Status Message */}
-                    {showStatus && statusMessage && (
-                        <SimpleStatusContainer 
-                            Message={statusMessage.type} 
-                            Desc={statusMessage.message} 
-                            Buttons={[
-                                {
-                                    BGColor: "#0d6efd",
-                                    BRColor: "#0d6efd",
-                                    Color: "white",
-                                    OnClick: () => setShowStatus(false),
-                                    Title: "Close"
-                                }
-                            ]}
-                        />
-                    )}
+                                </>
+                                : <MainForm Title="Sales" SearchHint="Search Customer Name" ButtonTitle="Add Sale" Filters={[
+                                    <SimpleInput Text="Date" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="date" Value={searchDate == '-'? "" : searchDate} CallBack={setSearchDate} Disabled={false} />,
+                                    <SimpleDropDown Title="Select Category" Options={categories} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setSearchCategory} />,
+                                    <SimpleDropDown Title="Select Product" Options={products} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setSearchProduct} />,
+                                ]} Columns={['saleID', columns]} DataFields={["customerName", "phone", "productName", "categoryName", "wholesalerName", "quantity", "discount", "tax", "totalBill"]} Data={[sales[page]]} Page={Paging} Update={updateSale} Delete={deleteSale} Add={() => natigate('/invoice')} Search={searchCustomer} SetSearch={setSearchCustomer} />
+                    }
                 </DashboardLayout>
                 : <Forbidden />
+        }
+        {
+            confirmation ? <SimpleStatusContainer Message={statusData.Message} Desc={statusData.Desc} Buttons={statusData.Buttons} /> : <></>
+        }
+
+        {
+            updateForm ? <UAForm Title={"Update Sale"} Inputs={[
+                <SimpleDropDown Title="Select Stock" Options={stocks} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateSaleData((prev)=> ({...prev, stockID : val}))} />,
+                <SimpleInput Text="Qunatity" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateSaleData.quantity} CallBack={(val) => setUpdateSaleData((prev => ({ ...prev, quantity: val })))} Disabled={false} />,
+                <SimpleInput Text="Discount" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateSaleData.discount} CallBack={(val) => setUpdateSaleData((prev => ({ ...prev, stock: val })))} Disabled={false} />,
+                <SimpleInput Text="Tax" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateSaleData.tax} CallBack={(val) => setUpdateSaleData((prev => ({ ...prev, tax: val })))} Disabled={false} />,
+                <SimpleInput Text="Total Bill" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateSaleData.totalBill} CallBack={(val) => setUpdateSaleData((prev => ({ ...prev, totalBill: val })))} Disabled={false} />,
+                <SimpleDropDown Title="Select Customer" Options={customers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateSaleData((prev)=> ({...prev, customerID : val}))} />
+            ]} Buttons={[
+                {
+                    Title: "Cancel",
+                    Color: "#11b112",
+                    BGColor: "transferant",
+                    BRColor: "#11b112",
+                    OnClick: () => setUpdateForm(false)
+                },
+                {
+                    Title: "Confirm",
+                    Color: "#ff0000",
+                    BGColor: "transferant",
+                    BRColor: "#ff0000",
+                    OnClick: () => updateConfirmation()
+                },
+            ]} /> : <></>
         }
     </>
 }

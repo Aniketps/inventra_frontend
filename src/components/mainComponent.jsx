@@ -17,6 +17,7 @@ import ServiceCard from "./cards/services.jsx";
 import ButtonWithIcon from "./buttons/ButtonWithIcon.jsx";
 import Forbidden from "./StatusContainers/Forbidden.jsx"
 import SectionBar from "./navContents/SectionBar.jsx";
+import UAForm from "./forms/UAForm.jsx";
 
 export {
         Button, DropDownWithSearch, SimpleDropDown,
@@ -24,5 +25,5 @@ export {
         ProgressIndicator, TitledIndicator, InputBothSideIcons,
         InputRightIcon, InputLeftIcon, SimpleInput, Section,
         SimpleStatusContainer, ServiceCard, ButtonWithIcon,
-        Forbidden, SectionBar
+        Forbidden, SectionBar, UAForm
     }

@@ -1,5 +1,5 @@
 import DashboardLayout from "../layouts/DashboardLayout.jsx";
-import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer, DropDownWithSearch } from "../components/mainComponent.jsx";
+import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer, MainForm, UAForm, SimpleDropDown } from "../components/mainComponent.jsx";
 import VerifyEntry from "../services/validateUserEntry.jsx"
 import { useEffect, useState } from "react";
 import { AllProducts, AddProduct, DeleteProduct, UpdateProduct } from "../services/productService.jsx";
@@ -8,354 +8,363 @@ import { AllCategories } from "../services/categoryService.jsx";
 function Products() {
     const [authStatus, setAuthStatus] = useState(null);
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [newProduct, setNewProduct] = useState({
-        name: "",
-        categoryID: ""
-    });
-    const [editingProduct, setEditingProduct] = useState(null);
-    const [editName, setEditName] = useState("");
-    const [editCategoryID, setEditCategoryID] = useState("");
-    const [statusMessage, setStatusMessage] = useState("");
-    const [showStatus, setShowStatus] = useState(false);
+    const [page, setPage] = useState('1');
+    const [statusData, setStatusData] = useState({});
+    const [confirmation, setConfimation] = useState(false);
+    const [newForm, setNewForm] = useState(false);
+    const [updateForm, setUpdateForm] = useState(false);
+    const [newProductName, setNewProductName] = useState('');
+    const [newProductCategory, setNewProductCategory] = useState('');
+    const [updateProductData, setUpdateProductData] = useState({});
+    const [searchDate, setSearchDate] = useState("-");
+    const [searchName, setSearchName] = useState("-");
+    const [searchCategory, setSearchCategory] = useState("-");
+    const [categories, setCategories] = useState([]);
+
+    const columns = ["Sr. No", "Product", "Category", "Update", "Delete"];
 
     useEffect(() => {
+        let timed;
         (
             async () => {
                 const result = await VerifyEntry();
                 setAuthStatus(result);
                 if (result) {
-                    fetchProducts();
-                    fetchCategories();
+                    const timed = setTimeout(() => {
+                        fetchProducts();
+                    }, 1000);
                 }
             }
         )();
-    }, []);
-    
-    const fetchProducts = async () => {
+        if (timed) return () => clearTimeout(timed);
+    }, [confirmation, searchDate, searchName]);
+
+    const update = async () => {
         setLoading(true);
         try {
-            const response = await AllProducts();
+            const response = await UpdateProduct(updateProductData.productID, updateProductData.productName, updateProductData.categoryID);
             if (response.status === 200) {
-                const productData = response.data.data;
-                // Flatten the grouped data structure
-                let allProducts = [];
-                for (const group in productData) {
-                    allProducts = [...allProducts, ...productData[group]];
-                }
-                console.log("All products: ", allProducts);
-
-                setProducts(allProducts);
+                setStatusData({
+                    "Message": "Updated Successfully",
+                    "Desc": "Record Has been Updated Successfully...",
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
+            } else {
+                setStatusData({
+                    "Message": "Failed To Updated",
+                    "Desc": response.response.data.message,
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
             }
         } catch (error) {
-            console.error("Error fetching products:", error);
-            showStatusMessage("Error", "Failed to load products");
+            setStatusData({
+                "Message": "Failed To Updated",
+                "Desc": response.response.data.message,
+                "Buttons": [
+                    {
+                        Title: "Close",
+                        Color: "white",
+                        BGColor: "#0069d9",
+                        BRColor: "#0069d9",
+                        OnClick: () => setConfimation(false)
+                    }
+                ]
+            });
+            setConfimation(true);
         } finally {
             setLoading(false);
         }
+    }
+
+    const updateConfirmation = () => {
+        setUpdateForm(false);
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to Update the record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Update",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: update
+                },
+            ]
+        });
+        setConfimation(true);
     };
 
-    const fetchCategories = async () => {
-        try {
-            const response = await AllCategories();
-            if (response.status === 200) {
-                const categoryData = response.data.data;
-                // Flatten the grouped data structure
-                let allCategories = [];
-                for (const group in categoryData) {
-                    allCategories = [...allCategories, ...categoryData[group]];
+    const updateProduct = async (...data) => {
+        await setUpdateProductData(data[0]);
+        setUpdateForm(true);
+    }
+
+    const deleteProduct = (id) => {
+        const del = async () => {
+            setLoading(true);
+            try {
+                const response = await DeleteProduct(id);
+                if (response.status === 200) {
+                    setStatusData({
+                        "Message": "Deleted Successfully",
+                        "Desc": "Record Has been Deleted Successfully... ",
+                        "Buttons": [
+                            {
+                                Title: "Close",
+                                Color: "white",
+                                BGColor: "#0069d9",
+                                BRColor: "#0069d9",
+                                OnClick: () => setConfimation(false)
+                            }
+                        ]
+                    });
+                    setConfimation(true);
                 }
-                console.log("All categories: ", allCategories);
-
-                
-                setCategories(allCategories);
-            }
-        } catch (error) {
-            console.error("Error fetching categories:", error);
-        }
-    };
-
-    const handleAddProduct = async () => {
-        if (!newProduct.name.trim()) {
-            showStatusMessage("Error", "Product name cannot be empty");
-            return;
-        }
-
-        if (!newProduct.categoryID) {
-            showStatusMessage("Error", "Please select a category");
-            return;
-        }
-
-        try {
-            // Ensure consistent type handling for API call
-            const response = await AddProduct(
-                newProduct.name, 
-                String(newProduct.categoryID)
-            );
-            if (response.status === 201) {
-                showStatusMessage("Success", "Product added successfully");
-                setNewProduct({
-                    name: "",
-                    categoryID: ""
+            } catch (error) {
+                setStatusData({
+                    "Message": "Failed To Delete",
+                    "Desc": error,
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
                 });
-                fetchProducts();
+                setConfimation(true);
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            console.error("Error adding product:", error);
-            showStatusMessage("Error", "Failed to add product");
-        }
-    };
+        };
 
-    const handleDeleteProduct = async (id) => {
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to delete the record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Delete",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: del
+                },
+            ]
+        });
+
+        setConfimation(true);
+    }
+
+    async function addNewProduct(name, cat) {
+        setConfimation(false);
+        const response = await AddProduct(name, cat);
+        if (response.status === 201) {
+            setStatusData({
+                "Message": "Added Successfully",
+                "Desc": "Record Has been Added Successfully... ",
+                "Buttons": [
+                    {
+                        Title: "Close",
+                        Color: "white",
+                        BGColor: "#0069d9",
+                        BRColor: "#0069d9",
+                        OnClick: () => setConfimation(false)
+                    }
+                ]
+            });
+            setConfimation(true);
+        } else {
+            setStatusData({
+                "Message": "Failed To Add",
+                "Desc": response.response.data.message,
+                "Buttons": [
+                    {
+                        Title: "Close",
+                        Color: "white",
+                        BGColor: "#0069d9",
+                        BRColor: "#0069d9",
+                        OnClick: () => setConfimation(false)
+                    }
+                ]
+            });
+            setConfimation(true);
+        }
+    }
+
+    const isConfirmNewCat = () => {
+        setNewForm(false);
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to add new record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Confirm",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: async () => await addNewProduct(newProductName, newProductCategory)
+                },
+            ]
+        });
+        setConfimation(true);
+    }
+
+    const fetchProducts = async () => {
+        setLoading(true);
         try {
-            const response = await DeleteProduct(id);
+            const response = await AllProducts(searchName, searchDate, searchCategory);
             if (response.status === 200) {
-                showStatusMessage("Success", "Product deleted successfully");
-                fetchProducts();
+                const productData = response.data.data;
+                setProducts(productData);
+            }
+            const response1 = await AllCategories('-', '-');
+            if (response1.status === 200) {
+                let categoryData = [];
+                const keys = Object.keys(response1.data.data);
+                for (let i = 0; i < keys.length; i++) {
+                    const page = keys[i];
+                    const pageData = response1.data.data[page].map(data => ({
+                        ...data,
+                        key: data.categoryName,
+                        value: data.categoryID
+                    }));
+                    categoryData = [...categoryData, ...pageData];
+                }
+                setCategories(categoryData);
             }
         } catch (error) {
-            console.error("Error deleting product:", error);
-            showStatusMessage("Error", "Failed to delete product");
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const startEditing = (product) => {
-        setEditingProduct(product);
-        setEditName(product.productName);
-        // Convert categoryID to string for consistent handling
-        setEditCategoryID(product.categoryID ? String(product.categoryID) : "");
-    };
-
-    const handleUpdateProduct = async () => {
-        if (!editName.trim()) {
-            showStatusMessage("Error", "Product name cannot be empty");
-            return;
-        }
-
-        if (!editCategoryID) {
-            showStatusMessage("Error", "Please select a category");
-            return;
-        }
-
-        try {
-            // Ensure consistent type handling for API call
-            const response = await UpdateProduct(
-                editingProduct.productID, 
-                editName, 
-                String(editCategoryID)
-            );
-            if (response.status === 200) {
-                showStatusMessage("Success", "Product updated successfully");
-                setEditingProduct(null);
-                fetchProducts();
-            }
-        } catch (error) {
-            console.error("Error updating product:", error);
-            showStatusMessage("Error", "Failed to update product");
-        }
-    };
-
-    const cancelEditing = () => {
-        setEditingProduct(null);
-        setEditName("");
-        setEditCategoryID("");
-    };
-
-    const showStatusMessage = (type, message) => {
-        setStatusMessage({ type, message });
-        setShowStatus(true);
-        setTimeout(() => setShowStatus(false), 3000);
-    };
-
-    const getCategoryName = (categoryID) => {
-        // Convert categoryID to string for consistent comparison
-        const categoryIdString = String(categoryID);
-        console.log("Category ID String: ", categoryID);
-
-        
-        const category = categories.find(c => String(c.categoryID) === categoryIdString);
-        console.log("Category Name: "+(category ));
-        console.log("Category ID: "+(category ? category.categoryID : "Unknown"));
-        
-        return category ? category.categoryName : "Unknown Category";
     };
 
     if (authStatus === null) {
         return <TitledIndicator Process="Loading..." />
     }
 
+    const Paging = (pageNo) => {
+        if (pageNo === 1) {
+            if (parseInt(page) + 1 <= Object.keys(products).length) {
+                setPage(prev => `${parseInt(prev) + pageNo}`)
+            }
+        } else {
+            if (page !== '1') {
+                setPage(prev => `${parseInt(prev) + pageNo}`)
+            }
+        }
+    }
+
     return <>
         {
             authStatus
                 ? <DashboardLayout>
-                    <div className="container py-4">
-                        <h1 className="mb-4 text-white">Products Management</h1>
-                        
-                        {/* Add New Product */}
-                        <div className="card mb-4">
-                            <div className="card-header bg-dark text-white">
-                                <h5 className="mb-0">Add New Product</h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <label className="form-label">Product Name</label>
-                                        <SimpleInput 
-                                            Text="Product Name" 
-                                            BGColor="#f8f9fa" 
-                                            BRColor="#ced4da" 
-                                            Color="#212529" 
-                                            Value={newProduct.name} 
-                                            CallBack={(value) => setNewProduct({...newProduct, name: value})} 
-                                        />
+                    {
+                        loading
+                            ? <TitledIndicator Process="Loading Data..." />
+                            : Object.keys(products).length == 0
+                                ? <>
+                                    <div
+                                        className="d-flex flex-column justify-content-center align-items-center"
+                                        style={{ height: "90vh", width: "100%", color: "white" }}
+                                    >
+                                        <h2>No Products Found</h2>
+                                        <Button Title="New Product" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => setNewForm(true)} />
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Category</label>
-                                        <DropDownWithSearch 
-                                            Options={Array.isArray(categories) ? categories.map(category => ({
-                                                ID: category.categoryID,
-                                                Name: category.categoryName
-                                            })) : []} 
-                                            OnSelect={(selected) => setNewProduct({...newProduct, categoryID: selected.id})} 
-                                            Placeholder="Select Category" 
-                                        />
-                                    </div>
-                                    <div className="col-12 mt-3">
-                                        <Button 
-                                            Title="Add Product" 
-                                            BGColor="#0d6efd" 
-                                            Color="white" 
-                                            BRColor="#0d6efd" 
-                                            OnClick={handleAddProduct} 
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Products List */}
-                        <div className="card">
-                            <div className="card-header bg-dark text-white">
-                                <h5 className="mb-0">Products List</h5>
-                            </div>
-                            <div className="card-body">
-                                {loading ? (
-                                    <TitledIndicator Process="Loading products..." />
-                                ) : products.length === 0 ? (
-                                    <p className="text-center">No products found</p>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table table-striped table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Name</th>
-                                                    <th>Category</th>
-                                                    <th>Created Date</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {Array.isArray(products) ? products.map(product => (
-                                                    
-                                                    <tr key={product.productID}>
-                                                        <td>{product.productID}</td>
-                                                        <td>
-                                                            {editingProduct && editingProduct.productID === product.productID ? (
-                                                                <SimpleInput 
-                                                                    Text="Edit Name" 
-                                                                    BGColor="#f8f9fa" 
-                                                                    BRColor="#ced4da" 
-                                                                    Color="#212529" 
-                                                                    Value={editName} 
-                                                                    CallBack={setEditName} 
-                                                                />
-                                                            ) : (
-                                                                product.productName
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingProduct && editingProduct.productID === product.productID ? (
-                                                                <DropDownWithSearch 
-                                                                    Options={Array.isArray(categories) ? categories.map(category => ({
-                                                                        ID: category.categoryID,
-                                                                        Name: category.categoryName
-                                                                    })) : []} 
-                                                                    OnSelect={(selected) => setEditCategoryID(selected.id)} 
-                                                                    Placeholder="Select Category" 
-                                                                    DefaultValue={getCategoryName(product.categoryID)}
-                                                                />
-                                                            ) : (
-                                                                getCategoryName(product.categoryID)
-                                                            )}
-                                                        </td>
-                                                        <td>{new Date(product.productCreatedDate).toLocaleDateString()}</td>
-                                                        <td>
-                                                            {editingProduct && editingProduct.productID === product.productID ? (
-                                                                <div className="d-flex gap-2">
-                                                                    <Button 
-                                                                        Title="Save" 
-                                                                        BGColor="#198754" 
-                                                                        Color="white" 
-                                                                        BRColor="#198754" 
-                                                                        OnClick={handleUpdateProduct} 
-                                                                    />
-                                                                    <Button 
-                                                                        Title="Cancel" 
-                                                                        BGColor="#6c757d" 
-                                                                        Color="white" 
-                                                                        BRColor="#6c757d" 
-                                                                        OnClick={cancelEditing} 
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="d-flex gap-2">
-                                                                    <Button 
-                                                                        Title="Edit" 
-                                                                        BGColor="#0d6efd" 
-                                                                        Color="white" 
-                                                                        BRColor="#0d6efd" 
-                                                                        OnClick={() => startEditing(product)} 
-                                                                    />
-                                                                    <Button 
-                                                                        Title="Delete" 
-                                                                        BGColor="#dc3545" 
-                                                                        Color="white" 
-                                                                        BRColor="#dc3545" 
-                                                                        OnClick={() => handleDeleteProduct(product.productID)} 
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                )) : []}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {/* Status Message */}
-                    {showStatus && statusMessage && (
-                        <SimpleStatusContainer 
-                            Message={statusMessage.type} 
-                            Desc={statusMessage.message} 
-                            Buttons={[
-                                {
-                                    BGColor: "#0d6efd",
-                                    BRColor: "#0d6efd",
-                                    Color: "white",
-                                    OnClick: () => setShowStatus(false),
-                                    Title: "Close"
-                                }
-                            ]}
-                        />
-                    )}
+                                </>
+                                : <MainForm Title="Products" SearchHint="Search Product Name" ButtonTitle="Add Product" Filters={[
+                                    <SimpleInput Text="Select Date" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="date" Value={searchDate == '-' ? "" : searchDate} CallBack={setSearchDate} Disabled={false} />,
+                                ]} Columns={['productID', columns]} DataFields={["productName", "categoryName"]} Data={[products[page]]} Page={Paging} Update={updateProduct} Delete={deleteProduct} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName} />
+                    }
                 </DashboardLayout>
                 : <Forbidden />
+        }
+        {
+            confirmation ? <SimpleStatusContainer Message={statusData.Message} Desc={statusData.Desc} Buttons={statusData.Buttons} /> : <></>
+        }
+        {
+            newForm ? <UAForm Title={"New Product"} Inputs={[
+                <SimpleInput Text="Product Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newProductName} CallBack={setNewProductName} Disabled={false} />,
+                <SimpleDropDown Title="Select Category" Options={categories} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setNewProductCategory} />
+            ]} Buttons={[
+                {
+                    Title: "Cancel",
+                    Color: "#11b112",
+                    BGColor: "transferant",
+                    BRColor: "#11b112",
+                    OnClick: () => setNewForm(false)
+                },
+                {
+                    Title: "Confirm",
+                    Color: "#ff0000",
+                    BGColor: "transferant",
+                    BRColor: "#ff0000",
+                    OnClick: () => isConfirmNewCat()
+                },
+            ]} /> : <></>
+        }
+
+        {
+            updateForm ? <UAForm Title={"Update Product"} Inputs={[
+                <SimpleInput Text="Product Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateProductData.productName} CallBack={(val) => setUpdateProductData((prev => ({ ...prev, productName: val })))} Disabled={false} />,
+                <SimpleDropDown Title="Select Category" Options={categories} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateProductData((prev)=> ({...prev, categoryID : val}))} />
+            ]} Buttons={[
+                {
+                    Title: "Cancel",
+                    Color: "#11b112",
+                    BGColor: "transferant",
+                    BRColor: "#11b112",
+                    OnClick: () => setUpdateForm(false)
+                },
+                {
+                    Title: "Confirm",
+                    Color: "#ff0000",
+                    BGColor: "transferant",
+                    BRColor: "#ff0000",
+                    OnClick: () => updateConfirmation()
+                },
+            ]} /> : <></>
         }
     </>
 }

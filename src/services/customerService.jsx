@@ -1,9 +1,9 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllCustomers() {
+export async function AllCustomers(customerName, date, address, phone, email) {
     try {
-        const data = await axios.get("http://localhost:3000/api/customers?s=0", {
+        const data = await axios.get(`http://localhost:3000/api/customers/${customerName}/${date}/${address}/${phone}/${email}`, {
             headers: {
                 Authorization : Cookies.get("token"),
             }

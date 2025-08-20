@@ -1,396 +1,370 @@
 import DashboardLayout from "../layouts/DashboardLayout.jsx";
-import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer } from "../components/mainComponent.jsx";
-import VerifyEntry from "../services/validateUserEntry.jsx";
+import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer, MainForm, UAForm } from "../components/mainComponent.jsx";
+import VerifyEntry from "../services/validateUserEntry.jsx"
 import { useEffect, useState } from "react";
-import { AllWholesalers, AddWholesaler, DeleteWholesaler, UpdateWholesaler } from "../services/wholesalerService.jsx";
+import { AllCategories, AddCategory, DeleteCategory, UpdateCategory } from "../services/categoryService.jsx";
+import { AllWholesalers, DeleteWholesaler, UpdateWholesaler, AddWholesaler } from "../services/wholesalerService.jsx";
 
-function Wholesalers() {
+function Categories() {
     const [authStatus, setAuthStatus] = useState(null);
     const [wholesalers, setWholesalers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState('1');
+    const [statusData, setStatusData] = useState({});
+    const [confirmation, setConfimation] = useState(false);
+    const [newForm, setNewForm] = useState(false);
+    const [updateForm, setUpdateForm] = useState(false);
 
-    // ✅ Fix: Initialize as object, not string
-    const [statusMessage, setStatusMessage] = useState({ type: "", message: "" });
-    const [showStatus, setShowStatus] = useState(false);
+    const [newWholesalersName, setNewWholesalersName] = useState('');
+    const [newWholesalersAddress, setNewWholesalersAddress] = useState('');
+    const [newWholesalersPhone, setNewWholesalersPhone] = useState('');
+    const [newWholesalersEmail, setNewWholesalersEmail] = useState('');
+    
+    const [updateWholesalerData, setUpdateWholesalerData] = useState({});
+    
+    const [searchAddress, setSearchAddress] = useState("-");
+    const [searchDate, setSearchDate] = useState("-");
+    const [searchContact, setSearchContact] = useState("-");
+    const [searchEmail, setSearchEmail] = useState("-");
+    const [searchName, setSearchName] = useState("-");
 
-    // Form states for adding new wholesaler
-    const [newWholesaler, setNewWholesaler] = useState({
-        name: "",
-        address: "",
-        phone: "",
-        email: ""
-    });
-
-    // Form states for editing wholesaler
-    const [editingWholesaler, setEditingWholesaler] = useState(null);
-    const [editForm, setEditForm] = useState({
-        name: "",
-        address: "",
-        phone: "",
-        email: ""
-    });
+    const columns = ["Sr. No", "Name", "Contact", "Email","Address", "Date", "Update", "Delete"];
 
     useEffect(() => {
-        (async () => {
-            const result = await VerifyEntry();
-            setAuthStatus(result);
-            if (result) {
-                fetchWholesalers();
+        let timed;
+        (
+            async () => {
+                const result = await VerifyEntry();
+                setAuthStatus(result);
+                if (result) {
+                    const timed = setTimeout(()=>{
+                        fetchWholesalers();
+                    }, 1000);
+                }
             }
-        })();
-    }, []);
+        )();
+        if(timed) return () => clearTimeout(timed);
+    }, [confirmation, searchAddress, searchDate, searchContact, searchEmail, searchName]);
+
+    const update = async() => {
+        setLoading(true);
+        try {
+            const response = await UpdateWholesaler(updateWholesalerData.wholesalerID, updateWholesalerData.wholesalerName, updateWholesalerData.address, updateWholesalerData.phone, updateWholesalerData.email);
+            if (response.status === 200) {
+                setStatusData({
+                    "Message": "Updated Successfully",
+                    "Desc": "Record Has been Updated Successfully...",
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
+            }else{
+                setStatusData({
+                    "Message": "Failed To Updated",
+                    "Desc": response.response.data.message,
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
+            }
+        } catch (error) {
+            setStatusData({
+                "Message": "Failed To Updated",
+                "Desc": response.response.data.message,
+                "Buttons": [
+                    {
+                        Title: "Close",
+                        Color: "white",
+                        BGColor: "#0069d9",
+                        BRColor: "#0069d9",
+                        OnClick: () => setConfimation(false)
+                    }
+                ]
+            });
+            setConfimation(true);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const updateConfirmation = () => {
+        setUpdateForm(false);
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to Update the record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Update",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: update
+                },
+            ]
+        });
+        setConfimation(true);
+    };
+
+    const updateWholesaler = async (...data) => {
+        await setUpdateWholesalerData(data[0]);
+        setUpdateForm(true);
+    }
+
+    const deleteWholesaler = (id) => {
+        const del = async () => {
+            setLoading(true);
+            try {
+                const response = await DeleteWholesaler(id);
+                if (response.status === 200) {
+                    setStatusData({
+                        "Message": "Deleted Successfully",
+                        "Desc": "Record Has been Deleted Successfully... ",
+                        "Buttons": [
+                            {
+                                Title: "Close",
+                                Color: "white",
+                                BGColor: "#0069d9",
+                                BRColor: "#0069d9",
+                                OnClick: () => setConfimation(false)
+                            }
+                        ]
+                    });
+                    setConfimation(true);
+                }
+            } catch (error) {
+                setStatusData({
+                    "Message": "Failed To Delete",
+                    "Desc": error,
+                    "Buttons": [
+                        {
+                            Title: "Close",
+                            Color: "white",
+                            BGColor: "#0069d9",
+                            BRColor: "#0069d9",
+                            OnClick: () => setConfimation(false)
+                        }
+                    ]
+                });
+                setConfimation(true);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to delete the record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Delete",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: del
+                },
+            ]
+        });
+
+        setConfimation(true);
+    }
+
+    async function addNewWholesaler(name, address, phone, email) {
+        setConfimation(false);
+        const response = await AddWholesaler(name, address, phone, email);
+        if (response.status === 201) {
+            setStatusData({
+                "Message": "Added Successfully",
+                "Desc": "Record Has been Added Successfully... ",
+                "Buttons": [
+                    {
+                        Title: "Close",
+                        Color: "white",
+                        BGColor: "#0069d9",
+                        BRColor: "#0069d9",
+                        OnClick: () => setConfimation(false)
+                    }
+                ]
+            });
+            setConfimation(true);
+        } else {
+            setStatusData({
+                "Message": "Failed To Add",
+                "Desc": response.response.data.message,
+                "Buttons": [
+                    {
+                        Title: "Close",
+                        Color: "white",
+                        BGColor: "#0069d9",
+                        BRColor: "#0069d9",
+                        OnClick: () => setConfimation(false)
+                    }
+                ]
+            });
+            setConfimation(true);
+        }
+    }
+
+    const isConfirmNewWholesaler = () => {
+        setNewForm(false);
+        setStatusData({
+            "Message": "Are You Sure?",
+            "Desc": "Sure you want to add new record?",
+            "Buttons": [
+                {
+                    Title: "Cancel",
+                    Color: "white",
+                    BGColor: "#11b112",
+                    BRColor: "#11b112",
+                    OnClick: () => setConfimation(false)
+                },
+                {
+                    Title: "Confirm",
+                    Color: "white",
+                    BGColor: "#ff0000",
+                    BRColor: "#ff0000",
+                    OnClick: async () => await addNewWholesaler(newWholesalersName, newWholesalersAddress, newWholesalersPhone, newWholesalersEmail)
+                },
+            ]
+        });
+        setConfimation(true);
+    }
 
     const fetchWholesalers = async () => {
         setLoading(true);
         try {
-            const response = await AllWholesalers();
+            const response = await AllWholesalers(searchDate, searchAddress, searchName, searchContact, searchEmail);
             if (response.status === 200) {
-                setWholesalers(response.data.data);
+                const wholesalerData = response.data.data;
+                setWholesalers(wholesalerData);
             }
         } catch (error) {
-            console.error("Error fetching wholesalers:", error);
-            showStatusMessage("Error", "Failed to load wholesalers");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleAddWholesaler = async () => {
-        if (!newWholesaler.name.trim()) {
-            showStatusMessage("Error", "Wholesaler name cannot be empty");
-            return;
-        }
-
-        try {
-            const response = await AddWholesaler(
-                newWholesaler.name,
-                newWholesaler.address,
-                newWholesaler.phone,
-                newWholesaler.email
-            );
-
-            if (response.status === 201) {
-                showStatusMessage("Success", "Wholesaler added successfully");
-
-                // ✅ Optimize: Update state locally
-                setWholesalers(prev => [...prev, response.data.data]);
-
-                setNewWholesaler({
-                    name: "",
-                    address: "",
-                    phone: "",
-                    email: ""
-                });
-            }
-        } catch (error) {
-            const errMsg = error.response?.data?.message || "Failed to add wholesaler";
-            console.error("Error adding wholesaler:", error);
-            showStatusMessage("Error", errMsg);
-        }
-    };
-
-    const handleDeleteWholesaler = async (id) => {
-        // ✅ Confirmation before delete
-        if (!window.confirm("Are you sure you want to delete this wholesaler?")) return;
-
-        try {
-            const response = await DeleteWholesaler(id);
-            if (response.status === 200) {
-                showStatusMessage("Success", "Wholesaler deleted successfully");
-
-                // ✅ Optimize: Remove from state instead of refetch
-                setWholesalers(prev => prev.filter(w => w.wholesalerID !== id));
-            }
-        } catch (error) {
-            const errMsg = error.response?.data?.message || "Failed to delete wholesaler";
-            console.error("Error deleting wholesaler:", error);
-            showStatusMessage("Error", errMsg);
-        }
-    };
-
-    const startEditing = (wholesaler) => {
-        setEditingWholesaler(wholesaler);
-        setEditForm({
-            name: wholesaler.wholesalerName,
-            address: wholesaler.wholesalerAddress || "",
-            phone: wholesaler.wholesalerPhone || "",
-            email: wholesaler.wholesalerEmail || ""
-        });
-    };
-
-    const handleUpdateWholesaler = async () => {
-        if (!editForm.name.trim()) {
-            showStatusMessage("Error", "Wholesaler name cannot be empty");
-            return;
-        }
-
-        try {
-            const response = await UpdateWholesaler(
-                editingWholesaler.wholesalerID,
-                editForm.name,
-                editForm.address,
-                editForm.phone,
-                editForm.email
-            );
-
-            if (response.status === 200) {
-                showStatusMessage("Success", "Wholesaler updated successfully");
-
-                // ✅ Optimize: Update state locally
-                setWholesalers(prev =>
-                    prev.map(w =>
-                        w.wholesalerID === editingWholesaler.wholesalerID
-                            ? { ...w, wholesalerName: editForm.name, wholesalerAddress: editForm.address, wholesalerPhone: editForm.phone, wholesalerEmail: editForm.email }
-                            : w
-                    )
-                );
-
-                setEditingWholesaler(null);
-            }
-        } catch (error) {
-            const errMsg = error.response?.data?.message || "Failed to update wholesaler";
-            console.error("Error updating wholesaler:", error);
-            showStatusMessage("Error", errMsg);
-        }
-    };
-
-    const cancelEditing = () => {
-        setEditingWholesaler(null);
-    };
-
-    const showStatusMessage = (type, message) => {
-        setStatusMessage({ type, message });
-        setShowStatus(true);
-        setTimeout(() => setShowStatus(false), 3000);
-    };
-
     if (authStatus === null) {
-        return <TitledIndicator Process="Loading..." />;
+        return <TitledIndicator Process="Loading..." />
     }
 
-    return (
-        <>
-            {authStatus ? (
-                <DashboardLayout>
-                    <div className="container py-4">
-                        <h1 className="mb-4">Wholesalers Management</h1>
+    const Paging = (pageNo) => {
+        if (pageNo === 1) {
+            if (parseInt(page) + 1 <= Object.keys(wholesalers).length) {
+                setPage(prev => `${parseInt(prev) + pageNo}`)
+            }
+        } else {
+            if (page !== '1') {
+                setPage(prev => `${parseInt(prev) + pageNo}`)
+            }
+        }
+    }
 
-                        {/* Add New Wholesaler */}
-                        <div className="card mb-4">
-                            <div className="card-header bg-dark text-white">
-                                <h5 className="mb-0">Add New Wholesaler</h5>
-                            </div>
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <label className="form-label">Name</label>
-                                        <SimpleInput
-                                            Text="Wholesaler Name"
-                                            BGColor="#f8f9fa"
-                                            BRColor="#ced4da"
-                                            Color="#212529"
-                                            Value={newWholesaler.name}
-                                            CallBack={(value) => setNewWholesaler({ ...newWholesaler, name: value })}
-                                        />
+    return <>
+        {
+            authStatus
+                ? <DashboardLayout>
+                    {
+                        loading
+                            ? <TitledIndicator Process="Loading Data..." />
+                            : Object.keys(wholesalers).length == 0
+                                ? <>
+                                    <div
+                                        className="d-flex flex-column justify-content-center align-items-center"
+                                        style={{ height: "90vh", width: "100%", color: "white" }}
+                                    >
+                                        <h2>No Wholesalers Found</h2>
+                                        <Button Title="New Wholesaler" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => setNewForm(true)} />
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Address</label>
-                                        <SimpleInput
-                                            Text="Address"
-                                            BGColor="#f8f9fa"
-                                            BRColor="#ced4da"
-                                            Color="#212529"
-                                            Value={newWholesaler.address}
-                                            CallBack={(value) => setNewWholesaler({ ...newWholesaler, address: value })}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Phone</label>
-                                        <SimpleInput
-                                            Text="Phone Number"
-                                            BGColor="#f8f9fa"
-                                            BRColor="#ced4da"
-                                            Color="#212529"
-                                            Value={newWholesaler.phone}
-                                            CallBack={(value) => setNewWholesaler({ ...newWholesaler, phone: value })}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Email</label>
-                                        <SimpleInput
-                                            Text="Email Address"
-                                            BGColor="#f8f9fa"
-                                            BRColor="#ced4da"
-                                            Color="#212529"
-                                            Value={newWholesaler.email}
-                                            CallBack={(value) => setNewWholesaler({ ...newWholesaler, email: value })}
-                                        />
-                                    </div>
-                                    <div className="col-12 mt-3">
-                                        <Button
-                                            Title="Add Wholesaler"
-                                            BGColor="#0d6efd"
-                                            Color="white"
-                                            BRColor="#0d6efd"
-                                            OnClick={handleAddWholesaler}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Wholesalers List */}
-                        <div className="card">
-                            <div className="card-header bg-dark text-white">
-                                <h5 className="mb-0">Wholesalers List</h5>
-                            </div>
-                            <div className="card-body">
-                                {loading ? (
-                                    <TitledIndicator Process="Loading wholesalers..." />
-                                ) : wholesalers.length === 0 ? (
-                                    <p className="text-center">No wholesalers found</p>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table table-striped table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Name</th>
-                                                    <th>Address</th>
-                                                    <th>Phone</th>
-                                                    <th>Email</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {wholesalers.map(wholesaler => (
-                                                    <tr key={wholesaler.wholesalerID}>
-                                                        <td>{wholesaler.wholesalerID}</td>
-                                                        <td>
-                                                            {editingWholesaler?.wholesalerID === wholesaler.wholesalerID ? (
-                                                                <SimpleInput
-                                                                    Text="Edit Name"
-                                                                    BGColor="#f8f9fa"
-                                                                    BRColor="#ced4da"
-                                                                    Color="#212529"
-                                                                    Value={editForm.name}
-                                                                    CallBack={(value) => setEditForm({ ...editForm, name: value })}
-                                                                />
-                                                            ) : (
-                                                                wholesaler.wholesalerName
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingWholesaler?.wholesalerID === wholesaler.wholesalerID ? (
-                                                                <SimpleInput
-                                                                    Text="Edit Address"
-                                                                    BGColor="#f8f9fa"
-                                                                    BRColor="#ced4da"
-                                                                    Color="#212529"
-                                                                    Value={editForm.address}
-                                                                    CallBack={(value) => setEditForm({ ...editForm, address: value })}
-                                                                />
-                                                            ) : (
-                                                                wholesaler.wholesalerAddress || "-"
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingWholesaler?.wholesalerID === wholesaler.wholesalerID ? (
-                                                                <SimpleInput
-                                                                    Text="Edit Phone"
-                                                                    BGColor="#f8f9fa"
-                                                                    BRColor="#ced4da"
-                                                                    Color="#212529"
-                                                                    Value={editForm.phone}
-                                                                    CallBack={(value) => setEditForm({ ...editForm, phone: value })}
-                                                                />
-                                                            ) : (
-                                                                wholesaler.wholesalerPhone || "-"
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingWholesaler?.wholesalerID === wholesaler.wholesalerID ? (
-                                                                <SimpleInput
-                                                                    Text="Edit Email"
-                                                                    BGColor="#f8f9fa"
-                                                                    BRColor="#ced4da"
-                                                                    Color="#212529"
-                                                                    Value={editForm.email}
-                                                                    CallBack={(value) => setEditForm({ ...editForm, email: value })}
-                                                                />
-                                                            ) : (
-                                                                wholesaler.wholesalerEmail || "-"
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {editingWholesaler?.wholesalerID === wholesaler.wholesalerID ? (
-                                                                <div className="d-flex gap-2">
-                                                                    <Button
-                                                                        Title="Save"
-                                                                        BGColor="#198754"
-                                                                        Color="white"
-                                                                        BRColor="#198754"
-                                                                        OnClick={handleUpdateWholesaler}
-                                                                    />
-                                                                    <Button
-                                                                        Title="Cancel"
-                                                                        BGColor="#6c757d"
-                                                                        Color="white"
-                                                                        BRColor="#6c757d"
-                                                                        OnClick={cancelEditing}
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="d-flex gap-2">
-                                                                    <Button
-                                                                        Title="Edit"
-                                                                        BGColor="#0d6efd"
-                                                                        Color="white"
-                                                                        BRColor="#0d6efd"
-                                                                        OnClick={() => startEditing(wholesaler)}
-                                                                    />
-                                                                    <Button
-                                                                        Title="Delete"
-                                                                        BGColor="#dc3545"
-                                                                        Color="white"
-                                                                        BRColor="#dc3545"
-                                                                        OnClick={() => handleDeleteWholesaler(wholesaler.wholesalerID)}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Status Message */}
-                    {showStatus && statusMessage && (
-                        <SimpleStatusContainer
-                            Message={statusMessage.type}
-                            Desc={statusMessage.message}
-                            Buttons={[
-                                {
-                                    BGColor: "#0d6efd",
-                                    BRColor: "#0d6efd",
-                                    Color: "white",
-                                    OnClick: () => setShowStatus(false),
-                                    Title: "Close"
-                                }
-                            ]}
-                        />
-                    )}
+                                </>
+                                : <MainForm Title="Wholesalers" SearchHint="Search Wholesaler Name" ButtonTitle="Add Wholesaler" Filters={[
+                                    <SimpleInput Text="Select Date" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="date" Value={searchDate == '-'? "" : searchDate} CallBack={setSearchDate} Disabled={false} />,
+                                    <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchAddress == '-'? "" : searchAddress} CallBack={setSearchAddress} Disabled={false} />,
+                                    <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchContact == '-'? "" : searchContact} CallBack={setSearchContact} Disabled={false} />,
+                                    <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchEmail == '-'? "" : searchEmail} CallBack={setSearchEmail} Disabled={false} />,
+                                ]} Columns={['wholesalerID', columns]} DataFields={["wholesalerName", "phone", "email", "address", "connectedDate"]} Data={[wholesalers[page]]} Page={Paging} Update={updateWholesaler} Delete={deleteWholesaler} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName}/>
+                    }
                 </DashboardLayout>
-            ) : (
-                <Forbidden />
-            )}
-        </>
-    );
+                : <Forbidden />
+        }
+        {
+            confirmation ? <SimpleStatusContainer Message={statusData.Message} Desc={statusData.Desc} Buttons={statusData.Buttons} /> : <></>
+        }
+        {
+            newForm ? <UAForm Title={"New Wholesaler"} Inputs={[
+                <SimpleInput Text="Wholesaler Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newWholesalersName} CallBack={setNewWholesalersName} Disabled={false} />,
+                <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newWholesalersAddress} CallBack={setNewWholesalersAddress} Disabled={false} />,
+                <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newWholesalersPhone} CallBack={setNewWholesalersPhone} Disabled={false} />,
+                <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newWholesalersEmail} CallBack={setNewWholesalersEmail} Disabled={false} />,
+            ]} Buttons={[
+                {
+                    Title: "Cancel",
+                    Color: "#11b112",
+                    BGColor: "transferant",
+                    BRColor: "#11b112",
+                    OnClick: () => setNewForm(false)
+                },
+                {
+                    Title: "Confirm",
+                    Color: "#ff0000",
+                    BGColor: "transferant",
+                    BRColor: "#ff0000",
+                    OnClick: () => isConfirmNewWholesaler()
+                },
+            ]} /> : <></>
+        }
+
+        {
+            updateForm ? <UAForm Title={"Update Wholesaler"} Inputs={[
+                <SimpleInput Text="Wholesaler Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateWholesalerData.wholesalerName} CallBack={(val) => setUpdateWholesalerData((prev => ({ ...prev, wholesalerName: val })))} Disabled={false} />,
+                <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateWholesalerData.address} CallBack={(val) => setUpdateWholesalerData((prev => ({ ...prev, address: val })))} Disabled={false} />,
+                <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateWholesalerData.phone} CallBack={(val) => setUpdateWholesalerData((prev => ({ ...prev, phone: val })))} Disabled={false} />,
+                <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateWholesalerData.email} CallBack={(val) => setUpdateWholesalerData((prev => ({ ...prev, email: val })))} Disabled={false} />,
+            ]} Buttons={[
+                {
+                    Title: "Cancel",
+                    Color: "#11b112",
+                    BGColor: "transferant",
+                    BRColor: "#11b112",
+                    OnClick: () => setUpdateForm(false)
+                },
+                {
+                    Title: "Confirm",
+                    Color: "#ff0000",
+                    BGColor: "transferant",
+                    BRColor: "#ff0000",
+                    OnClick: () => updateConfirmation()
+                },
+            ]} /> : <></>
+        }
+    </>
 }
 
-export default Wholesalers;
+export default Categories;

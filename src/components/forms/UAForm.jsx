@@ -1,11 +1,10 @@
-import { Button } from "../mainComponent";
+import { SimpleInput, Button } from "../mainComponent";
 
-function SimpleStatusContainer({ Message, Desc, Buttons }) {
+function UAForm({ Title, Inputs, Buttons }){
     return <>
-        <div className="d-flex flex-column gap-3 align-items-center justify-content-center"
+        <div className="d-flex flex-column gap-3 p-3 justify-content-between"
             style={
                 {
-                    height: "280px",
                     width: "650px",
                     color : "white",
                     background: "white",
@@ -20,15 +19,21 @@ function SimpleStatusContainer({ Message, Desc, Buttons }) {
                     borderRadius : "20px"
                 }
             }>
-            <h1>{ Message }</h1>
-            <p>{ Desc }</p>
-            <div className="w-100 d-flex flex-row align-items-center" style={{ justifyContent : "space-evenly" }}>
+            <div>
+                <h3>{ Title }</h3>
+            </div>
+            <div className="d-flex flex-column gap-2">
                 {
-                    Buttons.map((data)=><Button BGColor={data.BGColor} BRColor={data.BRColor} Color={data.Color} OnClick={data.OnClick} Title={data.Title}/>)
+                    Inputs.map(Field => Field)
+                }
+            </div>
+            <div className="d-flex flex-row align-items-center justify-content-end gap-2">
+                {
+                    Buttons.map(b => <Button Title={b.Title} Color={b.Color} BGColor={b.BGColor} BRColor={b.BRColor} OnClick={b.OnClick}/>)
                 }
             </div>
         </div>
     </>
 }
 
-export default SimpleStatusContainer;
+export default UAForm;

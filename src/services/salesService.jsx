@@ -1,11 +1,11 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllSales() {
+export async function AllSales(customerName, date, categoryName, wholesalerName, productName) {
     try {
-        const data = await axios.get("http://localhost:3000/api/sales?s=0", {
+        const data = await axios.get(`http://localhost:3000/api/sales/${customerName}/${date}/${categoryName}/${wholesalerName}/${productName}`, {
             headers: {
-                Authorization : Cookies.get("token"),
+                Authorization: Cookies.get("token"),
             }
         });
         return data;
@@ -19,9 +19,10 @@ export async function AddSale(saleData) {
     try {
         const data = await axios.post("http://localhost:3000/api/sales/new", saleData, {
             headers: {
-                Authorization : Cookies.get("token"),
+                Authorization: Cookies.get("token"),
             }
         });
+        console.log(data);
         return data;
     } catch (err) {
         console.log(err);
@@ -33,7 +34,7 @@ export async function GetSaleById(id) {
     try {
         const data = await axios.get(`http://localhost:3000/api/sales/${id}`, {
             headers: {
-                Authorization : Cookies.get("token"),
+                Authorization: Cookies.get("token"),
             }
         });
         return data;
@@ -50,10 +51,10 @@ export async function SearchSales(customerName, purchaseDate, productCategory, w
         const productCategoryParam = productCategory || '-';
         const wholesalerParam = wholesaler || '-';
         const productNameParam = productName || '-';
-        
+
         const data = await axios.get(`http://localhost:3000/api/sales/${customerNameParam}/${purchaseDateParam}/${productCategoryParam}/${wholesalerParam}/${productNameParam}`, {
             headers: {
-                Authorization : Cookies.get("token"),
+                Authorization: Cookies.get("token"),
             }
         });
         return data;
@@ -63,16 +64,24 @@ export async function SearchSales(customerName, purchaseDate, productCategory, w
     }
 }
 
-export async function UpdateSale(id, saleData) {
+export async function UpdateSale(id, stockID, quantity, discount, tax, totalBill, customerID) {
     try {
-        const data = await axios.put(`http://localhost:3000/api/sales/${id}`, saleData, {
-            headers: {
-                Authorization : Cookies.get("token"),
-            }
-        });
+        const data = await axios.put(`http://localhost:3000/api/sales/${id}`,
+            {
+                "stockID": stockID,
+                "quantity": quantity,
+                "discount": discount,
+                "tax": tax,
+                "totalBill": totalBill,
+                "customerID": customerID
+            },
+            {
+                headers: {
+                    Authorization: Cookies.get("token"),
+                }
+            });
         return data;
     } catch (err) {
-        console.log(err);
         return err;
     }
 }
@@ -81,7 +90,7 @@ export async function DeleteSale(id) {
     try {
         const data = await axios.delete(`http://localhost:3000/api/sales/${id}`, {
             headers: {
-                Authorization : Cookies.get("token"),
+                Authorization: Cookies.get("token"),
             }
         });
         return data;

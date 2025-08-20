@@ -1,32 +1,32 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllWholesalerProductEntries() {
+export async function AllWholesalerProductEntries(wholesalerName, productName, date) {
     try {
-        const data = await axios.get("http://localhost:3000/api/wholesalerProductEntries?s=0", {
+        const data = await axios.get(`http://localhost:3000/api/wholesalerprodcuctentries/${wholesalerName}/${productName}/${date}`, {
             headers: {
                 Authorization: Cookies.get("token"),
             }
         });
         return data;
     } catch (err) {
-        console.log(err);
         return err;
     }
 }
 
 export async function AddWholesalerProductEntry(productID, wholesalerID, cost, quantity) {
     try {
-        const data = await axios.post("http://localhost:3000/api/wholesalerProductEntries", {
-            productID,
-            wholesalerID,
-            cost,
-            quantity
-        }, {
-            headers: {
-                Authorization: Cookies.get("token"),
-            }
-        });
+        const data = await axios.post("http://localhost:3000/api/wholesalerprodcuctentries/new", {
+            "productID" : productID,
+            "wholesalerID" : wholesalerID,
+            "cost" : cost,
+            "quantity" : quantity
+        },
+            {
+                headers: {
+                    Authorization: Cookies.get("token"),
+                }
+            });
         return data;
     } catch (err) {
         console.log(err);
@@ -54,7 +54,7 @@ export async function SearchWholesalerProductEntries(productName, wholesalerName
         const p = productName || '-';
         const w = wholesalerName || '-';
         const d = date || '-';
-        
+
         const data = await axios.get(`http://localhost:3000/api/wholesalerProductEntries/search/${p}/${w}/${d}`, {
             headers: {
                 Authorization: Cookies.get("token"),
@@ -69,12 +69,13 @@ export async function SearchWholesalerProductEntries(productName, wholesalerName
 
 export async function UpdateWholesalerProductEntry(id, productID, wholesalerID, quantity, costPrice) {
     try {
-        const data = await axios.put(`http://localhost:3000/api/wholesalerProductEntries/${id}`, {
-            productID,
-            wholesalerID,
-            quantity,
-            costPrice
-        }, {
+        const data = await axios.put(`http://localhost:3000/api/wholesalerprodcuctentries/${id}`,
+            {
+                "productID": productID,
+                "wholesalerID": wholesalerID,
+                "costPrice": costPrice,
+                "quantity": quantity
+            }, {
             headers: {
                 Authorization: Cookies.get("token"),
             }
