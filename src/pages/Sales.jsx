@@ -9,7 +9,7 @@ import { UpdateSale, DeleteSale, AllSales } from "../services/salesService.jsx";
 import { AllStocks } from "../services/stockService.jsx";
 import { useNavigate } from "react-router-dom";
 
-function Sales() {
+function Sales({openCallBack}) {
     const [authStatus, setAuthStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState('1');
@@ -31,7 +31,7 @@ function Sales() {
     const [categories, setCategroies] = useState([]);
     const [sales, setSales] = useState([]);
 
-    const columns = ["Sr. No", "Customer", "Contact", "Product", "Category", "Wholesaler", "Quantity", "Discount", "Tax", "Total Bill", "Update", "Delete"];
+    const columns = ["Sr. No", "Customer", "Contact", "Product", "Category", "Wholesaler", "Quantity", "Discount", "Tax", "Total Bill", "Date", "Update", "Delete"];
 
     const natigate = useNavigate();
 
@@ -204,9 +204,13 @@ function Sales() {
     const fetchSales = async () => {
         setLoading(true);
         try {
-            const response3 = await AllSales(searchCustomer, searchDate, searchCategory, '-', searchCustomer);
+            const response3 = await AllSales(searchCustomer, searchDate, searchCategory, '-', searchProduct);
             if (response3.status === 200) {
-                setSales(response3.data.data);
+                if(Object.keys(response3.data.data).length === 0){
+                    setSales({1:[]});
+                }else{
+                    setSales(response3.data.data);
+                }
             }
             const response1 = await AllProducts('-', '-', '-');
             if (response1.status === 200) {
@@ -217,7 +221,7 @@ function Sales() {
                     const pageData = response1.data.data[page].map(data => ({
                         ...data,
                         key: data.productName,
-                        value: data.productID
+                        value: data.productName
                     }));
                     productData = [...productData, ...pageData];
                 }
@@ -301,10 +305,10 @@ function Sales() {
     return <>
         {
             authStatus
-                ? <DashboardLayout>
+                ? <div>
                     {
                         loading
-                            ? <TitledIndicator Process="Loading Data..." />
+                            ? <TitledIndicator Process="Loading Sales..." />
                             : Object.keys(sales).length == 0
                                 ? <>
                                     <div
@@ -312,16 +316,16 @@ function Sales() {
                                         style={{ height: "90vh", width: "100%", color: "white" }}
                                     >
                                         <h2>No Sales Found</h2>
-                                        <Button Title="New Sale" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => natigate('/invoice')} />
+                                        <Button Title="New Sale" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => openCallBack("Invoice")} />
                                     </div>
                                 </>
                                 : <MainForm Title="Sales" SearchHint="Search Customer Name" ButtonTitle="Add Sale" Filters={[
                                     <SimpleInput Text="Date" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="date" Value={searchDate == '-'? "" : searchDate} CallBack={setSearchDate} Disabled={false} />,
                                     <SimpleDropDown Title="Select Category" Options={categories} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setSearchCategory} />,
                                     <SimpleDropDown Title="Select Product" Options={products} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setSearchProduct} />,
-                                ]} Columns={['saleID', columns]} DataFields={["customerName", "phone", "productName", "categoryName", "wholesalerName", "quantity", "discount", "tax", "totalBill"]} Data={[sales[page]]} Page={Paging} Update={updateSale} Delete={deleteSale} Add={() => natigate('/invoice')} Search={searchCustomer} SetSearch={setSearchCustomer} />
+                                ]} Columns={['saleID', columns]} DataFields={["customerName", "phone", "productName", "categoryName", "wholesalerName", "quantity", "discount", "tax", "totalBill", "purchaseDate"]} Data={[sales[page]]} Page={Paging} Update={updateSale} Delete={deleteSale} Add={() => openCallBack("Invoice")} Search={searchCustomer} SetSearch={setSearchCustomer} />
                     }
-                </DashboardLayout>
+                </div>
                 : <Forbidden />
         }
         {
@@ -330,12 +334,12 @@ function Sales() {
 
         {
             updateForm ? <UAForm Title={"Update Sale"} Inputs={[
-                <SimpleDropDown Title="Select Stock" Options={stocks} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateSaleData((prev)=> ({...prev, stockID : val}))} />,
+                <SimpleDropDown Title="Select Stock" Options={stocks} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateSaleData((prev)=> ({...prev, stockID : val}))} id={updateSaleData.stockID}/>,
                 <SimpleInput Text="Qunatity" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateSaleData.quantity} CallBack={(val) => setUpdateSaleData((prev => ({ ...prev, quantity: val })))} Disabled={false} />,
                 <SimpleInput Text="Discount" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateSaleData.discount} CallBack={(val) => setUpdateSaleData((prev => ({ ...prev, stock: val })))} Disabled={false} />,
                 <SimpleInput Text="Tax" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateSaleData.tax} CallBack={(val) => setUpdateSaleData((prev => ({ ...prev, tax: val })))} Disabled={false} />,
                 <SimpleInput Text="Total Bill" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateSaleData.totalBill} CallBack={(val) => setUpdateSaleData((prev => ({ ...prev, totalBill: val })))} Disabled={false} />,
-                <SimpleDropDown Title="Select Customer" Options={customers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateSaleData((prev)=> ({...prev, customerID : val}))} />
+                <SimpleDropDown Title="Select Customer" Options={customers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateSaleData((prev)=> ({...prev, customerID : val}))} id={updateSaleData.customerID}/>
             ]} Buttons={[
                 {
                     Title: "Cancel",

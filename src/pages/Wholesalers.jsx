@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { AllCategories, AddCategory, DeleteCategory, UpdateCategory } from "../services/categoryService.jsx";
 import { AllWholesalers, DeleteWholesaler, UpdateWholesaler, AddWholesaler } from "../services/wholesalerService.jsx";
 
-function Categories() {
+function Wholesalers() {
     const [authStatus, setAuthStatus] = useState(null);
     const [wholesalers, setWholesalers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,16 +19,16 @@ function Categories() {
     const [newWholesalersAddress, setNewWholesalersAddress] = useState('');
     const [newWholesalersPhone, setNewWholesalersPhone] = useState('');
     const [newWholesalersEmail, setNewWholesalersEmail] = useState('');
-    
+
     const [updateWholesalerData, setUpdateWholesalerData] = useState({});
-    
+
     const [searchAddress, setSearchAddress] = useState("-");
     const [searchDate, setSearchDate] = useState("-");
     const [searchContact, setSearchContact] = useState("-");
     const [searchEmail, setSearchEmail] = useState("-");
     const [searchName, setSearchName] = useState("-");
 
-    const columns = ["Sr. No", "Name", "Contact", "Email","Address", "Date", "Update", "Delete"];
+    const columns = ["Sr. No", "Name", "Contact", "Email", "Address", "Date", "Update", "Delete"];
 
     useEffect(() => {
         let timed;
@@ -37,16 +37,16 @@ function Categories() {
                 const result = await VerifyEntry();
                 setAuthStatus(result);
                 if (result) {
-                    const timed = setTimeout(()=>{
+                    const timed = setTimeout(() => {
                         fetchWholesalers();
                     }, 1000);
                 }
             }
         )();
-        if(timed) return () => clearTimeout(timed);
+        if (timed) return () => clearTimeout(timed);
     }, [confirmation, searchAddress, searchDate, searchContact, searchEmail, searchName]);
 
-    const update = async() => {
+    const update = async () => {
         setLoading(true);
         try {
             const response = await UpdateWholesaler(updateWholesalerData.wholesalerID, updateWholesalerData.wholesalerName, updateWholesalerData.address, updateWholesalerData.phone, updateWholesalerData.email);
@@ -65,7 +65,7 @@ function Categories() {
                     ]
                 });
                 setConfimation(true);
-            }else{
+            } else {
                 setStatusData({
                     "Message": "Failed To Updated",
                     "Desc": response.response.data.message,
@@ -263,7 +263,11 @@ function Categories() {
             const response = await AllWholesalers(searchDate, searchAddress, searchName, searchContact, searchEmail);
             if (response.status === 200) {
                 const wholesalerData = response.data.data;
-                setWholesalers(wholesalerData);
+                if(Object.keys(wholesalerData).length == 0){
+                    setWholesalers({1:[]});
+                }else{
+                    setWholesalers(wholesalerData);
+                }
             }
         } catch (error) {
         } finally {
@@ -290,10 +294,10 @@ function Categories() {
     return <>
         {
             authStatus
-                ? <DashboardLayout>
+                ? <div>
                     {
                         loading
-                            ? <TitledIndicator Process="Loading Data..." />
+                            ? <TitledIndicator Process="Loading Wholesalers..." />
                             : Object.keys(wholesalers).length == 0
                                 ? <>
                                     <div
@@ -305,13 +309,13 @@ function Categories() {
                                     </div>
                                 </>
                                 : <MainForm Title="Wholesalers" SearchHint="Search Wholesaler Name" ButtonTitle="Add Wholesaler" Filters={[
-                                    <SimpleInput Text="Select Date" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="date" Value={searchDate == '-'? "" : searchDate} CallBack={setSearchDate} Disabled={false} />,
-                                    <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchAddress == '-'? "" : searchAddress} CallBack={setSearchAddress} Disabled={false} />,
-                                    <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchContact == '-'? "" : searchContact} CallBack={setSearchContact} Disabled={false} />,
-                                    <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchEmail == '-'? "" : searchEmail} CallBack={setSearchEmail} Disabled={false} />,
-                                ]} Columns={['wholesalerID', columns]} DataFields={["wholesalerName", "phone", "email", "address", "connectedDate"]} Data={[wholesalers[page]]} Page={Paging} Update={updateWholesaler} Delete={deleteWholesaler} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName}/>
+                                    <SimpleInput Text="Select Date" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="date" Value={searchDate == '-' ? "" : searchDate} CallBack={setSearchDate} Disabled={false} />,
+                                    <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchAddress == '-' ? "" : searchAddress} CallBack={setSearchAddress} Disabled={false} />,
+                                    <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchContact == '-' ? "" : searchContact} CallBack={setSearchContact} Disabled={false} />,
+                                    <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchEmail == '-' ? "" : searchEmail} CallBack={setSearchEmail} Disabled={false} />,
+                                ]} Columns={['wholesalerID', columns]} DataFields={["wholesalerName", "phone", "email", "address", "connectedDate"]} Data={[wholesalers[page]]} Page={Paging} Update={updateWholesaler} Delete={deleteWholesaler} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName} />
                     }
-                </DashboardLayout>
+                </div>
                 : <Forbidden />
         }
         {
@@ -367,4 +371,4 @@ function Categories() {
     </>
 }
 
-export default Categories;
+export default Wholesalers;

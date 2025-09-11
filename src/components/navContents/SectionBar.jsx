@@ -1,7 +1,7 @@
-function SectionBar({Title, Image, ToggleIcon}){
+function SectionBar({Title, Image, ToggleIcon, openCallBack}){
     
     return <>
-        <div className="d-flex flex-row align-items-center p-3" style={
+        <div onClick={() => openCallBack(Title)} className="d-flex flex-row align-items-center p-3" style={
             { 
                 height : "50px", 
                 border : "1px solid #77777750",

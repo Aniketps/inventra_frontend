@@ -15,7 +15,7 @@ function MainHeader() {
         <NavLink to="/services" className="link link-light link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Services</NavLink>
         <NavLink to="/contactus" className="link link-light link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Contact us</NavLink>
         {
-            token? <NavLink to="/invoice" className="link link-light link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Dashboard</NavLink> : null
+            token? <NavLink to="/dashboard" className="link link-light link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Dashboard</NavLink> : null
         }
     </>
 

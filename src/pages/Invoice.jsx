@@ -61,7 +61,7 @@ function Invoice() {
                     const productsData = allProductResponse.data?.data?.[1] || [];
                     const mappedProducts = productsData.map(p => ({
                         ...p,
-                        key: p.productName,
+                        key: `${p.productName} | ₹${p.sellingPrice} | ${p.stock} | ${p.wholesalerName}`,
                         value: p.stockID
                     }));
                     setAllProducts(mappedProducts);
@@ -377,7 +377,7 @@ function Invoice() {
     }
 
     return (
-        <DashboardLayout>
+        <div>
             <div className="w-100 h-100 p-3" style={{
                 backgroundColor: "#1C1C1C",
                 border: "1px solid #77777750",
@@ -500,11 +500,11 @@ function Invoice() {
 
             {
                 showAddCustomerModal
-                    ? <UAForm Title={"New Customer"} Inputs={[
-                        <SimpleInput Title="Name" Value={newCustomer.name} CallBack={(val) => setNewCustomer((prev => ({ ...prev, name: val })))} BGColor="#010101" BRColor="#77777750" Color="white" BSColor="#77777750" BRR="10" H="50" Type="text" Disabled={false} />,
-                        <SimpleInput Title="Email" Value={newCustomer.email} CallBack={(val) => setNewCustomer((prev => ({ ...prev, email: val })))} BGColor="#010101" BRColor="#77777750" Color="white" BSColor="#77777750" BRR="10" H="50" Type="text" Disabled={false} />,
-                        <SimpleInput Title="Phone" Value={newCustomer.phone} CallBack={(val) => setNewCustomer((prev => ({ ...prev, phone: val })))} BGColor="#010101" BRColor="#77777750" Color="white" BSColor="#77777750" BRR="10" H="50" Type="text" Disabled={false} />,
-                        <SimpleInput Title="Address" Value={newCustomer.address} CallBack={(val) => setNewCustomer((prev => ({ ...prev, address: val })))} BGColor="#010101" BRColor="#77777750" Color="white" BSColor="#77777750" BRR="10" H="50" Type="text" Disabled={false} />
+                    ? <UAForm Title="New Customer" Inputs={[
+                        <SimpleInput Text="Customer Name" BGColor="#010101" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCustomer.name} CallBack={(val) => setNewCustomer((prev => ({ ...prev, name: val })))} Disabled={false}/>,
+                        <SimpleInput Text="Email" BGColor="#010101" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCustomer.email} CallBack={(val) => setNewCustomer((prev => ({ ...prev, email: val })))} Disabled={false}/>,
+                        <SimpleInput Text="Phone" BGColor="#010101" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCustomer.phone} CallBack={(val) => setNewCustomer((prev => ({ ...prev, phone: val })))} Disabled={false}/>,
+                        <SimpleInput Text="Address" BGColor="#010101" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCustomer.address} CallBack={(val) => setNewCustomer((prev => ({ ...prev, address: val })))} Disabled={false}/>
                     ]} Buttons={[
                         {
                             Title: "Cancel",
@@ -522,7 +522,7 @@ function Invoice() {
                         },
                     ]} /> : <></>
             }
-        </DashboardLayout>
+        </div>
     );
 }
 

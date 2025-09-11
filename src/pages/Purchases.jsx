@@ -206,7 +206,11 @@ function Purchases() {
             const response = await AllWholesalerProductEntries(searchWholesalerName, searchProductName, searchDate);
             if (response.status === 200) {
                 const purchaseData = response.data.data;
-                setPurchases(purchaseData);
+                if(Object.keys(purchaseData).length === 0) {
+                    setPurchases({1:[]});
+                }else{
+                    setPurchases(purchaseData);
+                }
             }
             const response1 = await AllProducts('-', '-', '-');
             if (response1.status === 200) {
@@ -362,10 +366,10 @@ function Purchases() {
     return <>
         {
             authStatus
-                ? <DashboardLayout>
+                ? <div>
                     {
                         loading
-                            ? <TitledIndicator Process="Loading Data..." />
+                            ? <TitledIndicator Process="Loading Purchases..." />
                             : Object.keys(purchases).length == 0
                                 ? <>
                                     <div
@@ -382,7 +386,7 @@ function Purchases() {
                                     <SimpleDropDown Title="Select Wholesaler" Options={filterWholesalers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setSearchWholesalerName} />,
                                 ]} Columns={['wholesalerProductID', columns]} DataFields={["productName", "wholesalerName", "entryDate", "stock", "costPrice", "totalCost"]} Data={[purchases[page]]} Page={Paging} Update={updatePurchase} Delete={deletePurchase} Add={() => setNewForm(true)} Search={searchProductName} SetSearch={setSearchProductName} />
                     }
-                </DashboardLayout>
+                </div>
                 : <Forbidden />
         }
         {
@@ -390,8 +394,8 @@ function Purchases() {
         }
         {
             newForm ? <UAForm Title={"New Purchse"} Inputs={[
-                <SimpleDropDown Title="Select Product" Options={products} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setNewProductID} />,
-                <SimpleDropDown Title="Select Wholesaler" Options={wholesalers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setNewWholesalerID} />,
+                <SimpleDropDown Title="Select Product" Options={products} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setNewProductID} id={newProductID}/>,
+                <SimpleDropDown Title="Select Wholesaler" Options={wholesalers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setNewWholesalerID} id={newWholesalerID}/>,
                 <SimpleInput Text="Cost Price" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCostPrice} CallBack={setNewCostPrice} Disabled={false} />,
                 <SimpleInput Text="Quantity" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newQuantity} CallBack={setNewQuantity} Disabled={false} />,
             ]} Buttons={[

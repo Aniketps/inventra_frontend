@@ -7,7 +7,7 @@ import { AllWholesalers } from "../services/wholesalerService.jsx";
 import { useNavigate } from "react-router-dom";
 import { UpdateStock, DeleteStock, AllStocks } from "../services/stockService.jsx";
 
-function Stocks() {
+function Stocks({openCallBack}) {
     const [authStatus, setAuthStatus] = useState(null);
     const [stocks, setStocks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -203,7 +203,12 @@ function Stocks() {
 
             const response3 = await AllStocks(searchProduct, searchWholesalerName);
             if (response3.status === 200) {
-                setStocks(response3.data.data);
+                console.log(response3.data.data);
+                if(Object.keys(response3.data.data).length === 0){
+                    setStocks({1:[]});
+                }else{
+                    setStocks(response3.data.data);
+                }
             }
 
             const response1 = await AllProducts('-', '-', '-');
@@ -277,10 +282,10 @@ function Stocks() {
     return <>
         {
             authStatus
-                ? <DashboardLayout>
+                ? <div>
                     {
                         loading
-                            ? <TitledIndicator Process="Loading Data..." />
+                            ? <TitledIndicator Process="Loading Stocks..." />
                             : Object.keys(stocks).length == 0
                                 ? <>
                                     <div
@@ -288,14 +293,14 @@ function Stocks() {
                                         style={{ height: "90vh", width: "100%", color: "white" }}
                                     >
                                         <h2>No Stocks Found</h2>
-                                        <Button Title="New Stock" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => natigate('/purchases')} />
+                                        <Button Title="New Stock" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => openCallBack("Purchases")} />
                                     </div>
                                 </>
                                 : <MainForm Title="Stocks" SearchHint="Search Product Name" ButtonTitle="Add Stock" Filters={[
                                     <SimpleDropDown Title="Select Wholesaler" Options={filterWholesalers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setSearchWholesalerName} />
-                                ]} Columns={['stockID', columns]} DataFields={["productName", "wholesalerName", "stock", "sellingPrice", "totalCost"]} Data={[stocks[page]]} Page={Paging} Update={updateStock} Delete={deleteStock} Add={() => natigate('/purchases')} Search={searchProduct} SetSearch={setSearchProduct} />
+                                ]} Columns={['stockID', columns]} DataFields={["productName", "wholesalerName", "stock", "sellingPrice", "totalCost"]} Data={[stocks[page]]} Page={Paging} Update={updateStock} Delete={deleteStock} Add={() => openCallBack("Purchases")} Search={searchProduct} SetSearch={setSearchProduct} />
                     }
-                </DashboardLayout>
+                </div>
                 : <Forbidden />
         }
         {
@@ -304,10 +309,10 @@ function Stocks() {
 
         {
             updateForm ? <UAForm Title={"Update Stock"} Inputs={[
-                <SimpleDropDown Title="Select Product" Options={products} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val) => setUpdateStockProductData((prev) => ({ ...prev, productID: val }))} />,
+                <SimpleDropDown Title="Select Product" Options={products} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val) => setUpdateStockProductData((prev) => ({ ...prev, productID: val }))} id={updateStockProductData.productID}/>,
                 <SimpleInput Text="Qunatity" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateStockProductData.stock} CallBack={(val) => setUpdateStockProductData((prev => ({ ...prev, stock: val })))} Disabled={false} />,
                 <SimpleInput Text="Product Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="number" Value={updateStockProductData.sellingPrice} CallBack={(val) => setUpdateStockProductData((prev => ({ ...prev, sellingPrice: val })))} Disabled={false} />,
-                <SimpleDropDown Title="Select Wholesaler" Options={wholesalers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val) => setUpdateStockProductData((prev) => ({ ...prev, wholesalerID: val }))} />
+                <SimpleDropDown Title="Select Wholesaler" Options={wholesalers} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val) => setUpdateStockProductData((prev) => ({ ...prev, wholesalerID: val }))} id={updateStockProductData.wholesalerID}/>
             ]} Buttons={[
                 {
                     Title: "Cancel",

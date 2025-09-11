@@ -4,7 +4,7 @@ function TitledIndicator({Process}){
         <div className="d-flex flex-row align-items-center justify-content-start p-3" 
         style={
             { 
-                width : "250px", 
+                width : "350px", 
                 height : "45px" ,
                 position : "fixed",
                 left : "20px",
@@ -13,7 +13,7 @@ function TitledIndicator({Process}){
                 borderRadius : "10px",
                 border : "1px solid #77777750",
                 boxShadow : "1px 1px 1px #77777750",
-                color : "#fcfcfc7e"
+                color : "#fcfcfcda"
             }
         }>
             <h6 style={{ margin : "0" }}>{Process}</h6>

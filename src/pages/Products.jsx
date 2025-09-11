@@ -22,7 +22,7 @@ function Products() {
     const [searchCategory, setSearchCategory] = useState("-");
     const [categories, setCategories] = useState([]);
 
-    const columns = ["Sr. No", "Product", "Category", "Update", "Delete"];
+    const columns = ["Sr. No", "Product", "Category", "Date", "Update", "Delete"];
 
     useEffect(() => {
         let timed;
@@ -257,7 +257,11 @@ function Products() {
             const response = await AllProducts(searchName, searchDate, searchCategory);
             if (response.status === 200) {
                 const productData = response.data.data;
-                setProducts(productData);
+                if(Object.keys(productData).length == 0){
+                    setProducts({1:[]});
+                }else{
+                    setProducts(productData);
+                }
             }
             const response1 = await AllCategories('-', '-');
             if (response1.status === 200) {
@@ -299,10 +303,10 @@ function Products() {
     return <>
         {
             authStatus
-                ? <DashboardLayout>
+                ? <div>
                     {
                         loading
-                            ? <TitledIndicator Process="Loading Data..." />
+                            ? <TitledIndicator Process="Loading Products..." />
                             : Object.keys(products).length == 0
                                 ? <>
                                     <div
@@ -315,9 +319,9 @@ function Products() {
                                 </>
                                 : <MainForm Title="Products" SearchHint="Search Product Name" ButtonTitle="Add Product" Filters={[
                                     <SimpleInput Text="Select Date" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="date" Value={searchDate == '-' ? "" : searchDate} CallBack={setSearchDate} Disabled={false} />,
-                                ]} Columns={['productID', columns]} DataFields={["productName", "categoryName"]} Data={[products[page]]} Page={Paging} Update={updateProduct} Delete={deleteProduct} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName} />
+                                ]} Columns={['productID', columns]} DataFields={["productName", "categoryName", "productCreatedDate"]} Data={[products[page]]} Page={Paging} Update={updateProduct} Delete={deleteProduct} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName} />
                     }
-                </DashboardLayout>
+                </div>
                 : <Forbidden />
         }
         {
@@ -326,7 +330,7 @@ function Products() {
         {
             newForm ? <UAForm Title={"New Product"} Inputs={[
                 <SimpleInput Text="Product Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newProductName} CallBack={setNewProductName} Disabled={false} />,
-                <SimpleDropDown Title="Select Category" Options={categories} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setNewProductCategory} />
+                <SimpleDropDown Title="Select Category" Options={categories} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={setNewProductCategory}/>
             ]} Buttons={[
                 {
                     Title: "Cancel",
@@ -348,7 +352,7 @@ function Products() {
         {
             updateForm ? <UAForm Title={"Update Product"} Inputs={[
                 <SimpleInput Text="Product Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateProductData.productName} CallBack={(val) => setUpdateProductData((prev => ({ ...prev, productName: val })))} Disabled={false} />,
-                <SimpleDropDown Title="Select Category" Options={categories} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateProductData((prev)=> ({...prev, categoryID : val}))} />
+                <SimpleDropDown Title="Select Category" Options={categories} BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Flex="1" Color="white" CallBack={(val)=>setUpdateProductData(prev=> ({...prev, categoryID : val}))} id={updateProductData.categoryID}/>
             ]} Buttons={[
                 {
                     Title: "Cancel",

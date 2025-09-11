@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-export async function AllStocks(w, p) {
+export async function AllStocks(p, w) {
     const W = w === ""? '-' : w;
     const P = p === ""? '-' : p;
     try {

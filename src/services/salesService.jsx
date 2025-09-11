@@ -2,8 +2,13 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 export async function AllSales(customerName, date, categoryName, wholesalerName, productName) {
+    const CustomerName = customerName || '-';
+    const Date = date || '-';
+    const CategoryName = categoryName || '-';
+    const WholesalerName = wholesalerName || '-';
+    const ProductName = productName || '-';
     try {
-        const data = await axios.get(`http://localhost:3000/api/sales/${customerName}/${date}/${categoryName}/${wholesalerName}/${productName}`, {
+        const data = await axios.get(`http://localhost:3000/api/sales/${CustomerName}/${Date}/${CategoryName}/${WholesalerName}/${ProductName}`, {
             headers: {
                 Authorization: Cookies.get("token"),
             }

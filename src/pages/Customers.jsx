@@ -2,50 +2,53 @@ import DashboardLayout from "../layouts/DashboardLayout.jsx";
 import { Forbidden, TitledIndicator, Button, SimpleInput, SimpleStatusContainer, MainForm, UAForm } from "../components/mainComponent.jsx";
 import VerifyEntry from "../services/validateUserEntry.jsx"
 import { useEffect, useState } from "react";
-import { AllCategories, AddCategory, DeleteCategory, UpdateCategory } from "../services/categoryService.jsx";
+import { AllCustomers, addCustomer, DeleteCustomer, UpdateCustomer } from "../services/customerService.jsx";
 
-function Categories() {
+function Customers() {
     const [authStatus, setAuthStatus] = useState(null);
-    const [categories, setCategories] = useState([]);
+    const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState('1');
     const [statusData, setStatusData] = useState({});
     const [confirmation, setConfimation] = useState(false);
     const [newForm, setNewForm] = useState(false);
     const [updateForm, setUpdateForm] = useState(false);
-    const [newCategoryName, setNewCategoryName] = useState('');
-    const [updateCategoryData, setUpdateCategoryData] = useState({});
+
+    const [newCustomerName, setNewCustomerName] = useState('');
+    const [newCustomerAddress, setNewCustomerAddress] = useState('');
+    const [newCustomerPhone, setNewCustomerPhone] = useState('');
+    const [newCustomerEmail, setNewCustomerEmail] = useState('');
+
+    const [updateCustomerData, setUpdateCustomerData] = useState({});
+
+    const [searchAddress, setSearchAddress] = useState("-");
     const [searchDate, setSearchDate] = useState("-");
+    const [searchContact, setSearchContact] = useState("-");
+    const [searchEmail, setSearchEmail] = useState("-");
     const [searchName, setSearchName] = useState("-");
 
-    const columns = ["Sr. No", "Category Name", "Created Date", "Update", "Delete"];
+    const columns = ["Sr. No", "Name", "Contact", "Email", "Address", "Date", "Update", "Delete"];
 
     useEffect(() => {
         let timed;
-
-        const verifyAndFetch = async () => {
-            const result = await VerifyEntry();
-            setAuthStatus(result);
-
-            if (result) {
-                timed = setTimeout(() => {
-                    fetchCategories();
-                }, 1000);
+        (
+            async () => {
+                const result = await VerifyEntry();
+                setAuthStatus(result);
+                if (result) {
+                    const timed = setTimeout(() => {
+                        fetchCustomers();
+                    }, 1000);
+                }
             }
-        };
-
-        verifyAndFetch();
-
-        return () => {
-            if (timed) clearTimeout(timed);
-        };
-    }, [confirmation, searchDate, searchName]);
-
+        )();
+        if (timed) return () => clearTimeout(timed);
+    }, [confirmation, searchAddress, searchDate, searchContact, searchEmail, searchName]);
 
     const update = async () => {
         setLoading(true);
         try {
-            const response = await UpdateCategory(updateCategoryData.categoryID, updateCategoryData.categoryName);
+            const response = await UpdateCustomer(updateCustomerData.customerID, updateCustomerData.customerName, updateCustomerData.address, updateCustomerData.phone, updateCustomerData.email);
             if (response.status === 200) {
                 setStatusData({
                     "Message": "Updated Successfully",
@@ -122,16 +125,16 @@ function Categories() {
         setConfimation(true);
     };
 
-    const updateCategory = async (...data) => {
-        await setUpdateCategoryData(data[0]);
+    const updateCustomer = async (...data) => {
+        await setUpdateCustomerData(data[0]);
         setUpdateForm(true);
     }
 
-    const deleteCategory = (id) => {
+    const deleteCustomer = (id) => {
         const del = async () => {
             setLoading(true);
             try {
-                const response = await DeleteCategory(id);
+                const response = await DeleteCustomer(id);
                 if (response.status === 200) {
                     setStatusData({
                         "Message": "Deleted Successfully",
@@ -192,9 +195,9 @@ function Categories() {
         setConfimation(true);
     }
 
-    async function addNewCategory(name) {
+    async function addNewCustomer(name, email, phone, address) {
         setConfimation(false);
-        const response = await AddCategory(name);
+        const response = await addCustomer(name, email, phone, address);
         if (response.status === 201) {
             setStatusData({
                 "Message": "Added Successfully",
@@ -228,7 +231,7 @@ function Categories() {
         }
     }
 
-    const isConfirmNewCat = () => {
+    const isConfirmNewCustomer = () => {
         setNewForm(false);
         setStatusData({
             "Message": "Are You Sure?",
@@ -246,23 +249,23 @@ function Categories() {
                     Color: "white",
                     BGColor: "#ff0000",
                     BRColor: "#ff0000",
-                    OnClick: async () => await addNewCategory(newCategoryName)
+                    OnClick: async () => await addNewCustomer(newCustomerName, newCustomerEmail, newCustomerPhone, newCustomerAddress)
                 },
             ]
         });
         setConfimation(true);
     }
 
-    const fetchCategories = async () => {
+    const fetchCustomers = async () => {
         setLoading(true);
         try {
-            const response = await AllCategories(searchName, searchDate);
+            const response = await AllCustomers(searchName, searchDate, searchAddress, searchContact, searchEmail);
             if (response.status === 200) {
-                const categoryData = response.data.data;
-                if(Object.keys(categoryData).length == 0){
-                    setCategories({1:[]});
+                const customerData = response.data.data;
+                if(Object.keys(customerData).length == 0){
+                    setCustomers({1:[]});
                 }else{
-                    setCategories(categoryData);
+                    setCustomers(customerData);
                 }
             }
         } catch (error) {
@@ -277,7 +280,7 @@ function Categories() {
 
     const Paging = (pageNo) => {
         if (pageNo === 1) {
-            if (parseInt(page) + 1 <= Object.keys(categories).length) {
+            if (parseInt(page) + 1 <= Object.keys(wholesalers).length) {
                 setPage(prev => `${parseInt(prev) + pageNo}`)
             }
         } else {
@@ -293,20 +296,23 @@ function Categories() {
                 ? <div>
                     {
                         loading
-                            ? <TitledIndicator Process="Loading Categories..." />
-                            : Object.keys(categories).length == 0
+                            ? <TitledIndicator Process="Loading Customers..." />
+                            : Object.keys(customers).length == 0
                                 ? <>
                                     <div
                                         className="d-flex flex-column justify-content-center align-items-center"
                                         style={{ height: "90vh", width: "100%", color: "white" }}
                                     >
-                                        <h2>No Categories Found</h2>
-                                        <Button Title="New Category" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => setNewForm(true)} />
+                                        <h2>No Customers Found</h2>
+                                        <Button Title="New Customer" Color="#0069d9" BGColor="transferant" BRColor="#0069d9" OnClick={() => setNewForm(true)} />
                                     </div>
                                 </>
-                                : <MainForm Title="Categories" SearchHint="Search Category Name" ButtonTitle="Add Category" Filters={[
+                                : <MainForm Title="Customers" SearchHint="Search Customer Name" ButtonTitle="Add Customer" Filters={[
                                     <SimpleInput Text="Select Date" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="date" Value={searchDate == '-' ? "" : searchDate} CallBack={setSearchDate} Disabled={false} />,
-                                ]} Columns={['categoryID', columns]} DataFields={["categoryName", "createdDate"]} Data={[categories[page]]} Page={Paging} Update={updateCategory} Delete={deleteCategory} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName} />
+                                    <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchAddress == '-' ? "" : searchAddress} CallBack={setSearchAddress} Disabled={false} />,
+                                    <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchContact == '-' ? "" : searchContact} CallBack={setSearchContact} Disabled={false} />,
+                                    <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchEmail == '-' ? "" : searchEmail} CallBack={setSearchEmail} Disabled={false} />,
+                                ]} Columns={['CustomerID', columns]} DataFields={["customerName", "phone", "email", "address", "registeredDate"]} Data={[customers[page]]} Page={Paging} Update={updateCustomer} Delete={deleteCustomer} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName} />
                     }
                 </div>
                 : <Forbidden />
@@ -315,8 +321,11 @@ function Categories() {
             confirmation ? <SimpleStatusContainer Message={statusData.Message} Desc={statusData.Desc} Buttons={statusData.Buttons} /> : <></>
         }
         {
-            newForm ? <UAForm Title={"New Category"} Inputs={[
-                <SimpleInput Text="Category Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCategoryName} CallBack={setNewCategoryName} Disabled={false} />
+            newForm ? <UAForm Title={"New Customer"} Inputs={[
+                <SimpleInput Text="Customer Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCustomerName} CallBack={setNewCustomerName} Disabled={false} />,
+                <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCustomerAddress} CallBack={setNewCustomerAddress} Disabled={false} />,
+                <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCustomerPhone} CallBack={setNewCustomerPhone} Disabled={false} />,
+                <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={newCustomerEmail} CallBack={setNewCustomerEmail} Disabled={false} />,
             ]} Buttons={[
                 {
                     Title: "Cancel",
@@ -330,14 +339,17 @@ function Categories() {
                     Color: "#ff0000",
                     BGColor: "transferant",
                     BRColor: "#ff0000",
-                    OnClick: () => isConfirmNewCat()
+                    OnClick: () => isConfirmNewCustomer()
                 },
             ]} /> : <></>
         }
 
         {
-            updateForm ? <UAForm Title={"Update Category"} Inputs={[
-                <SimpleInput Text="Category Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateCategoryData.categoryName} CallBack={(val) => setUpdateCategoryData((prev => ({ ...prev, categoryName: val })))} Disabled={false} />
+            updateForm ? <UAForm Title={"Update Customer"} Inputs={[
+                <SimpleInput Text="Customer Name" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateCustomerData.customerName} CallBack={(val) => setUpdateCustomerData((prev => ({ ...prev, customerName: val })))} Disabled={false} />,
+                <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateCustomerData.address} CallBack={(val) => setUpdateCustomerData((prev => ({ ...prev, address: val })))} Disabled={false} />,
+                <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateCustomerData.phone} CallBack={(val) => setUpdateCustomerData((prev => ({ ...prev, phone: val })))} Disabled={false} />,
+                <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="50" BRColor="#77777750" Color="white" Type="text" Value={updateCustomerData.email} CallBack={(val) => setUpdateCustomerData((prev => ({ ...prev, email: val })))} Disabled={false} />,
             ]} Buttons={[
                 {
                     Title: "Cancel",
@@ -358,4 +370,4 @@ function Categories() {
     </>
 }
 
-export default Categories;
+export default Customers;

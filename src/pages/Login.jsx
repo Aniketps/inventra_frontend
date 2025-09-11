@@ -26,7 +26,7 @@ function Login() {
             if (response.data.loginStatus) {
                 Cookies.set("email", response.data.message.data.email, { expires: 30, path: "/" });
                 Cookies.set("token", response.data.message.data.token, { expires: 30, path: "/" });
-                navigate("/invoice");
+                navigate("/dashboard");
             } else {
                 Message = "Login Success",
                 Desc = response.data.error
