@@ -121,7 +121,7 @@ function Analysis() {
             if (response4.status === 200) {
                 const salesData = response4.data.data;
                 if (Object.keys(salesData).length == 0) {
-                    setSales({ 1: [] });
+                    setSales([] );
                 } else {
                     for (let i = 0; i < Object.keys(salesData).length; i++) {
                         const page = Object.keys(salesData)[i];
@@ -479,7 +479,6 @@ function Analysis() {
                                 </thead>
                                 {
                                     sales.sort((a, b) => b.saleID - a.saleID).map((s, i) =>
-
                                         <tbody>
                                             <tr key={i + 1}>
                                                 <td>{s.customerName}</td>

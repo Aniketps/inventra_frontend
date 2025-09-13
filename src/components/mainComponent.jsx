@@ -18,12 +18,13 @@ import ButtonWithIcon from "./buttons/ButtonWithIcon.jsx";
 import Forbidden from "./StatusContainers/Forbidden.jsx"
 import SectionBar from "./navContents/SectionBar.jsx";
 import UAForm from "./forms/UAForm.jsx";
+import SimpleLabel from "./inputFields/SimpleLabel.jsx";
 
 export {
         Button, DropDownWithSearch, SimpleDropDown,
         MainFooter, MainHeader, MainForm, LoadingIndicator,
         ProgressIndicator, TitledIndicator, InputBothSideIcons,
-        InputRightIcon, InputLeftIcon, SimpleInput, Section,
+        InputRightIcon, InputLeftIcon,SimpleLabel, SimpleInput, Section,
         SimpleStatusContainer, ServiceCard, ButtonWithIcon,
         Forbidden, SectionBar, UAForm
     }
