@@ -312,7 +312,7 @@ function Customers() {
                                     <SimpleInput Text="Address" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchAddress == '-' ? "" : searchAddress} CallBack={setSearchAddress} Disabled={false} />,
                                     <SimpleInput Text="Contact" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchContact == '-' ? "" : searchContact} CallBack={setSearchContact} Disabled={false} />,
                                     <SimpleInput Text="Email" BGColor="#0f0f0f" BSColor="#77777750" BRR="10" H="40" BRColor="#77777750" Color="white" Type="text" Value={searchEmail == '-' ? "" : searchEmail} CallBack={setSearchEmail} Disabled={false} />,
-                                ]} Columns={['CustomerID', columns]} DataFields={["customerName", "phone", "email", "address", "registeredDate"]} Data={[customers[page]]} Page={Paging} Update={updateCustomer} Delete={deleteCustomer} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName} />
+                                ]} Columns={['CustomerID', columns]} DataFields={["customerName", "phone", "email", "address", "registeredDate"]} Data={[customers[page]]} Page={Paging} Update={updateCustomer} Delete={() => deleteCustomer} Add={() => setNewForm(true)} Search={searchName} SetSearch={setSearchName} />
                     }
                 </div>
                 : <Forbidden />

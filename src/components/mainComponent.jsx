@@ -3,7 +3,7 @@ import DropDownWithSearch from "./dropwDowns/DropDownWithSearch.jsx"
 import SimpleDropDown from "./dropwDowns/SimpleDropDown.jsx"
 import MainFooter from "./footers/MainFooter.jsx"
 import MainForm from "./forms/MainForm.jsx"
-import MainHeader from "./headers/mainHeader.jsx";
+import MainHeader from "./headers/MainHeader.jsx";
 import LoadingIndicator from "./indicators/LoadingIndicator.jsx"
 import ProgressIndicator from "./indicators/ProgressIndicator.jsx"
 import TitledIndicator from "./indicators/TitledIndicator.jsx"

@@ -61,7 +61,7 @@ function Analysis() {
             if (response.status === 200) {
                 const categoryData = response.data.data;
                 if (Object.keys(categoryData).length == 0) {
-                    setCategories({ 1: [] });
+                    setCategories([]);
                 } else {
                     for (let i = 0; i < Object.keys(categoryData).length; i++) {
                         const page = Object.keys(categoryData)[i];
@@ -76,7 +76,7 @@ function Analysis() {
             if (response1.status === 200) {
                 const productData = response1.data.data;
                 if (Object.keys(productData).length == 0) {
-                    setProducts({ 1: [] });
+                    setProducts([]);
                 } else {
                     for (let i = 0; i < Object.keys(productData).length; i++) {
                         const page = Object.keys(productData)[i];
@@ -91,7 +91,7 @@ function Analysis() {
             if (response2.status === 200) {
                 const customerData = response2.data.data;
                 if (Object.keys(customerData).length == 0) {
-                    setCustomers({ 1: [] });
+                    setCustomers([]);
                 } else {
                     for (let i = 0; i < Object.keys(customerData).length; i++) {
                         const page = Object.keys(customerData)[i];
@@ -106,7 +106,7 @@ function Analysis() {
             if (response3.status === 200) {
                 const wholesalerData = response3.data.data;
                 if (Object.keys(wholesalerData).length == 0) {
-                    setWholesalers({ 1: [] });
+                    setWholesalers([]);
                 } else {
                     for (let i = 0; i < Object.keys(wholesalerData).length; i++) {
                         const page = Object.keys(wholesalerData)[i];
@@ -121,7 +121,7 @@ function Analysis() {
             if (response4.status === 200) {
                 const salesData = response4.data.data;
                 if (Object.keys(salesData).length == 0) {
-                    setSales({ 1: [] });
+                    setSales([]);
                 } else {
                     for (let i = 0; i < Object.keys(salesData).length; i++) {
                         const page = Object.keys(salesData)[i];
@@ -136,7 +136,7 @@ function Analysis() {
             if (response5.status === 200) {
                 const purchasesData = response5.data.data;
                 if (Object.keys(purchasesData).length == 0) {
-                    setPurchases({ 1: [] });
+                    setPurchases([]);
                 } else {
                     for (let i = 0; i < Object.keys(purchasesData).length; i++) {
                         const page = Object.keys(purchasesData)[i];
@@ -151,7 +151,7 @@ function Analysis() {
             if (response6.status === 200) {
                 const stockData = response6.data.data;
                 if (Object.keys(stockData).length == 0) {
-                    setStocks({ 1: [] });
+                    setStocks([]);
                 } else {
                     for (let i = 0; i < Object.keys(stockData).length; i++) {
                         const page = Object.keys(stockData)[i];
